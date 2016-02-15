@@ -13,8 +13,13 @@
 /*  12 May 2003 Version C1.001A  Amended version code                   */
 /*                                                                      */
 /*---- Functionality switches ------------------------------------------*/
-#define LOGGING 1
-#define ALLOW_CHEATING 1
+#ifdef Z_MACHINE
+ #define LOGGING 0
+ #define ALLOW_CHEATING 0
+#else
+ #define LOGGING 1
+ #define ALLOW_CHEATING 1
+#endif
 
 /*---- System dependent settings ---------------------------------------*/
 #define DISPWIDTH 80   /*  Display width for text wrapping              */

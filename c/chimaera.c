@@ -45,6 +45,16 @@
 #include    <math.h>        /*  Defines maths functions                 */
 #include    "chimaera.h"    /*  CHIMAERA variables, arrays and          */
                             /*  structures                              */
+
+#ifdef Z_MACHINE
+int ran(int range) =
+    "\t@random r0 -> r0;\n"
+    "\t@sub r0 0+1 -> r0;\n";
+static int seed_ = 0;
+void srand(int seed) { seed_ = seed; }
+int rand() { seed_ = seed_ * 214013L + 2531011L; return (seed_ >> 16) & 0x7fff; }
+#endif /* Z_MACHINE */
+
 /*---- Main Function ---------------------------------------------------*/
 
 int main()
@@ -100,7 +110,7 @@ int main()
         showtext();
         len = getline_();        /* Get input line and convert it to upper case */
         if (len == 0) { itest = 0; continue; }
-        if (!isdigit(inbuff[0])) { itest = 0; continue; }
+        if (!('0' <= inbuff[0] && inbuff[0] <= '9')) { itest = 0; continue; }
         advno = atoi(inbuff);
         if (advno < 0) { itest = 0; continue; }
         if (advno > 10) { itest = 0; continue; }
@@ -110,7 +120,11 @@ int main()
 /* Use the system time to calculate a seed for the random adventure     */
 
     if (advno == 0) {
+#ifdef Z_MACHINE
+       seed = ran(60);
+#else
        seed = rand() % 60;
+#endif
     } else {
        seed = advno;
     }
@@ -1949,10 +1963,10 @@ void showthings(void)                   /* Show objects which are here  */
 /*----------------------------------------------------------------------*/
 void showtext(void)                     /* Display the output line      */
    {
-    char buffer[201],          /* Display buffer   */
-         token[DISPWIDTH];            /* Token string     */
-    const char sep[] = " ";    /* Token separator  */
-    const char nl[] = "\n";
+    static char buffer[201];          /* Display buffer   */
+    char token[DISPWIDTH];            /* Token string     */
+    static const char sep[] = " ";    /* Token separator  */
+    static const char nl[] = "\n";
     char * pt;                 /* strtok() pointer */
 
     memset(&buffer[0],'\0',201);
@@ -2006,7 +2020,19 @@ void tnou(char *line)                   /* Print a line to the terminal */
 void tnoint(long n)                 /* Append a long integer to line    */
    {
     char text[11];
+#ifdef Z_MACHINE
+    char *p = text;
+    if (n >= 100000) { *p++ = '0' + (n % 1000000 / 100000); }
+    if (n >= 10000)  { *p++ = '0' + (n % 100000  / 10000);  }
+    if (n >= 1000)   { *p++ = '0' + (n % 10000   / 1000);   }
+    if (n >= 100)    { *p++ = '0' + (n % 1000    / 100);    }
+    if (n >= 10)     { *p++ = '0' + (n % 100     / 10);     }
+    if (n >= 1)      { *p++ = '0' + (n % 10);               }
+    if (n == 0) *p++ = '0';
+    *p++ = '\0';
+#else
     sprintf(text,"%ld",n);
+#endif
     strcat(display,text);
    }
 /*----------------------------------------------------------------------*/
@@ -4454,6 +4480,31 @@ void wave(int objpoint)          /* Wave the rod and other things       */
     showtext();
    }
 /*----------------------------------------------------------------------*/
+
+#ifdef Z_MACHINE
+
+void savegame(void)
+{
+    extern int attempt_save(void);
+    switch (attempt_save()) {
+        case 0: puts("Save failed!"); break;
+        case 1: puts("Saved."); break;
+        case 2: puts("Restored."); break;
+    }
+}
+
+void restore(void)
+{
+    extern int attempt_restore(void);
+    /* On the fizmo interpreter, @restore yields 2
+     * when the save file doesn't exist, or when it
+     * has the wrong serial number for this game.
+     * I don't know what return value 0 would mean. */
+    attempt_restore();
+    puts("Restore failed!");
+}
+
+#else
 void savegame(void)              /* Save a game                         */
    {
     FILE *savefile;
@@ -4687,6 +4738,8 @@ void restore(void)               /* Restore a game                      */
     mon_start();                   /* Activate monsters                 */
     monsters();                    /* Display active monsters           */
    }
+#endif /* Z_MACHINE */
+
 /*----------------------------------------------------------------------*/
 int get_password(void)           /* Get a user supplied password        */
 /* Get the character string 'userpass' from the player. If desired code */
