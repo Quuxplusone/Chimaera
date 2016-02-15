@@ -43,14 +43,9 @@
                             /*  and functions                           */
 #include    <string.h>      /*  Defines memory and string functions     */
 #include    <math.h>        /*  Defines maths functions                 */
-#include    <time.h>        /*  Date and time definitions               */
 #include    "chimaera.h"    /*  CHIMAERA variables, arrays and          */
                             /*  structures                              */
 /*---- Main Function ---------------------------------------------------*/
-
-struct tm *tptr;                   /* Time and date structure      */
-time_t lt;                         /* Time as type time_t          */
-char timebuff[80];                 /* Buffer for time string       */
 
 int main()
    {
@@ -65,8 +60,7 @@ int main()
     forever = 1;              /* Dummy condition for eternal while loop */
     memset(&display,'\0',MAXDISPLAY);        /* Clear display buffer */
 
-    if (LOGGING)
-      {
+#if LOGGING
        if ((log_file = fopen("chimaera.log","w")) == NULL)
          {
           printf("Unable to open session logging file 'chimaera.log'");
@@ -75,7 +69,7 @@ int main()
          {
           printf("[Session logging is ON]\n");
          }
-      }
+#endif
 
 /*---- Display the welcome screen and initialise all arrays ----*/
     welcome();
@@ -115,13 +109,11 @@ int main()
 /*---- Seed the random number generator --------------------------------*/
 /* Use the system time to calculate a seed for the random adventure     */
 
-    if (advno == 0)
-      {
-       lt = time(NULL);               /* Get the system time            */
-       tptr = localtime(&lt);
-       strftime(timebuff,80,"%S",tptr);  /* Extract the number of seconds  */
-       seed = atoi(timebuff) + 1;           /* convert it to an integer       */
-      } else seed = advno;
+    if (advno == 0) {
+       seed = rand() % 60;
+    } else {
+       seed = advno;
+    }
 
     srand(seed);                  /* Seed random number generator  */
     values[SEED] = rand();        /* use it to get a random number */
@@ -970,7 +962,9 @@ int getline_(void)                      /* Get a line of input           */
    {
     int i,len;
     fgets(inbuff,80,stdin);
-    if (LOGGING) fprintf(log_file,"%s",inbuff);
+#if LOGGING
+    fprintf(log_file,"%s",inbuff);
+#endif
     len = strlen(inbuff);
     for (i=0;i<len;i++) memset(&inbuff[i],toupper(inbuff[i]),1); /* Convert to uppercase */
     memset(&inbuff[len-1],'\0',1);                               /* Strip newline char   */
@@ -1969,7 +1963,9 @@ void showtext(void)                     /* Display the output line      */
            strcat(token,pt);            /* Store the current token */
            if (strstr(token,nl))
              {
-              if (LOGGING) fprintf(log_file,"%s\n",buffer);
+#if LOGGING
+              fprintf(log_file,"%s\n",buffer);
+#endif
               printf("%s\n",buffer);        /* New line, print and */
               memset(&buffer[0],'\0',201);  /* reset the buffer    */
              }
@@ -1979,14 +1975,18 @@ void showtext(void)                     /* Display the output line      */
               strcat(buffer," ");          /* and append a space           */
               if (strlen(buffer) > (DISPWIDTH - 15))
                  {
-                  if (LOGGING) fprintf(log_file,"%s\n",buffer);
+#if LOGGING
+                  fprintf(log_file,"%s\n",buffer);
+#endif
                   printf("%s\n",buffer);        /* Print and        */
                   memset(&buffer[0],'\0',201);   /* reset the buffer */
                  }
              }
            pt = strtok(NULL,sep);  /* Get next token */
           }
-    if (LOGGING) fprintf(log_file,"%s",buffer);
+#if LOGGING
+    fprintf(log_file,"%s",buffer);
+#endif
     printf("%s",buffer);              /* Flush the remaining text to the screen */
     memset(&buffer[0],'\0',201);      /* and reset the buffer to be tidy        */
     memset(&display,'\0',MAXDISPLAY); /* All shown, clear the display buffer    */
@@ -2084,13 +2084,17 @@ int yesno(void) /* Elicit the answer Yes or No */
         if (yn[0] == 'Y')
           {
            resp= 1;
-           if (LOGGING) fprintf(log_file,"y\n");
+#if LOGGING
+           fprintf(log_file,"y\n");
+#endif
            return(resp);
           }
         if (yn[0] == 'N')
           {
            resp= 0;
-           if (LOGGING) fprintf(log_file,"n\n");
+#if LOGGING
+           fprintf(log_file,"n\n");
+#endif
            return(resp);
           }
         tnou("Please answer Yes or No: ");
@@ -3808,7 +3812,9 @@ void quit(int act)                  /* Quit Chimaera                       */
       }      
     tonl(1);
     showtext();
+#if LOGGING
     fclose(log_file);
+#endif
     exit(0);
    }
 /*----------------------------------------------------------------------*/
