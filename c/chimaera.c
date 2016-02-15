@@ -2208,16 +2208,11 @@ long plumb(void)                        /* Locate the bottom of a shaft */
 void sleep(int i)                       /* Sleep for a while            */
    {
     int j;
-    long k;
-    double pi, root;
-    pi = 22 / 7;
     for (j=0;j<i;j++)
       {
-       for (k=0;k<DELAY;k++) root = sqrt(pi);
        tnoua(".");
        showtext();
       }
-    root = root--;
    }
 /*----------------------------------------------------------------------*/
 void cheat(void)                        /* Display current settings     */
