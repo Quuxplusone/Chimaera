@@ -2021,7 +2021,7 @@ void tnou(char *line)                   /* Print a line to the terminal */
 void tnoint(long n)                 /* Append a long integer to line    */
    {
     char text[11];
-    sprintf(text,"%d",n);
+    sprintf(text,"%ld",n);
     strcat(display,text);
    }
 /*----------------------------------------------------------------------*/
@@ -2257,13 +2257,13 @@ void cheat(void)                        /* Display current settings     */
     if (strstr(cbuff,"V"))
       {
        printf("Values: ");
-       printf("Daytime=%d ", values[DAYTIME]);
-       printf("Dawn=%d ", values[DAWN]);
-       printf("Dusk=%d ", values[DUSK]);
-       printf("Luck=%d ", values[LUCK]);
-       printf("Held=%d ",values[HELD]);
-       printf("Dwarf num=%d ",values[DWFNUM]);
-       printf("Dwarf now=%d ",values[DWFNOW]);
+       printf("Daytime=%ld ", values[DAYTIME]);
+       printf("Dawn=%ld ", values[DAWN]);
+       printf("Dusk=%ld ", values[DUSK]);
+       printf("Luck=%ld ", values[LUCK]);
+       printf("Held=%ld ",values[HELD]);
+       printf("Dwarf num=%ld ",values[DWFNUM]);
+       printf("Dwarf now=%ld ",values[DWFNOW]);
        printf("\n");
        for (i=1;i<MAXMON;i++) printf("%s=%d ",beasts[i],monstr[VAMPIRE]);
        printf("\n");
@@ -4151,7 +4151,7 @@ void status(void)                /* Establish a player's status         */
        return;
       }
     memset(&password[0],'\0',9);    /* Construct the password */
-    sprintf(password,"%.2s%.2s%.2s%02d",times[values[DAYTIME]],months[values[MONTH]],weekdays[values[WEEKDAY]],values[DAY]);
+    sprintf(password,"%.2s%.2s%.2s%02ld",times[values[DAYTIME]],months[values[MONTH]],weekdays[values[WEEKDAY]],values[DAY]);
     if (strncmp(password,userpass,8) == 0)
       {
        tnou("I am yours to command Oh Master! ");
@@ -4525,7 +4525,7 @@ void savegame(void)              /* Save a game                         */
     values[4] = y;
     values[5] = z;
     fprintf(savefile,"\nA: ");
-    for (i=1;i<MAXVAL;i++) { fprintf(savefile,"%d ",values[i]); sum += abs(values[i]); }
+    for (i=1;i<MAXVAL;i++) { fprintf(savefile,"%ld ",values[i]); sum += abs(values[i]); }
     fprintf(savefile,"\nB: ");
     for (i=1;i<MAXFLAG;i++) { fprintf(savefile,"%d ",flags[i]); sum += abs(flags[i]); }
     fprintf(savefile,"\nC: ");
