@@ -903,7 +903,7 @@ void describe( int mpoint)             /* Describe the current location */
                 if (flags[SMALL] && !flags[SWITCH]) tnoua("Rickety steps");
                 if (flags[LARGE] && flags[SWITCH])  tnoua("A spiral stair");
                 if (flags[LARGE] && !flags[SWITCH]) tnoua("Broad stairs");
-                if (flags[SWITCH] && (xyz & 1024 == 1024)) tnoua("case");
+                if (flags[SWITCH] && (xyz & 1024)) tnoua("case");
                }
              if ((tenbit & 256) == 256) flags[LEAD] = 1; else flags[LEAD] = 0;
              if (flags[LEAD])
