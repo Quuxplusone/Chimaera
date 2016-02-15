@@ -105,7 +105,7 @@ int main()
         itest = 1;
         tnoua("Choose one (0 - 10) ");
         showtext();
-        len = getline();        /* Get input line and convert it to upper case */
+        len = getline_();        /* Get input line and convert it to upper case */
         if (len == 0) { itest = 0; continue; }
         if (!isdigit(inbuff[0])) { itest = 0; continue; }
         advno = atoi(inbuff);
@@ -244,7 +244,7 @@ int main()
        tonl(1);
        tnoua("> ");                                       /* Get and parse an input line */
        showtext();
-       len = getline();
+       len = getline_();
        if (len == 0) continue; else i = parse();             /* Loop if input is null */
 
        /*---- Check the input against the dictionary ----*/
@@ -981,7 +981,7 @@ void describe( int mpoint)             /* Describe the current location */
     described = 1;
    }
 /*----------------------------------------------------------------------*/
-int getline(void)                      /* Get a line of input           */
+int getline_(void)                      /* Get a line of input           */
    {
     int i,len;
     fgets(inbuff,80,stdin);
@@ -2276,7 +2276,7 @@ void cheat(void)                        /* Display current settings     */
     if (strstr(cbuff,"S")) /* Go to a defined location */
       {
        printf("Set X, Y Z co-ordinates: ");
-       getline();
+       getline_();
        i=0;
        memset(&tokens[0],'\0',30);
        pt = strtok(inbuff,sep);     /* Get first token */
@@ -2297,7 +2297,7 @@ void cheat(void)                        /* Display current settings     */
        while (j == 1)
          {
           printf("Object > ");
-          getline();
+          getline_();
           if (strlen(inbuff) == 0) return;
           memset(&tokens[0],'\0',30);
           pt = strtok(inbuff,sep);      /* Get first token    */
@@ -2322,7 +2322,7 @@ void cheat(void)                        /* Display current settings     */
        while (j == 1)
          {
           printf("Monster > ");
-          getline();
+          getline_();
           if (strlen(inbuff) == 0) return;
           memset(&tokens[0],'\0',30);
           pt = strtok(inbuff,sep);      /* Get first token    */
@@ -2964,7 +2964,7 @@ void gamic(void)                 /* Section in gamic language           */
       {
        tnoua("> ");
        showtext();
-       len = getline();
+       len = getline_();
        if (len == 0) continue; else parse();             /* Loop if input is null */
        if (strncmp(action,"ENGLISH",3) == 0)
          {

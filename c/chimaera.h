@@ -593,7 +593,7 @@ static char times[49][10] =  /* Times of day for gettime() function */
 int main         (void);                /* Main function                */
 /*---- Utility Functions -----------------------------------------------*/
 void describe    (int n);              /* Describe the current location */
-int  getline     (void);                /* Get a line of input          */
+int  getline_    (void);                /* Get a line of input          */
 void timdat      (int z);               /* Display the time and date    */
 void initialise  (void);                /* Initialise arrays            */
 int  instructions(int n);               /* User instructions            */
