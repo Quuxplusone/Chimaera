@@ -1,5 +1,5 @@
 chimaera: chimaera.c chimaera.h
-	gcc -o $@ chimaera.c
+	gcc -ansi -pedantic -o $@ chimaera.c
 
 clean:
 	rm -f chimaera

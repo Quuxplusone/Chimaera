@@ -2792,7 +2792,7 @@ void fill(int objpoint)          /* Fill something                      */
     showtext();
    }
 /*----------------------------------------------------------------------*/
-void find(objpoint)              /* Find something                      */
+void find(int objpoint)          /* Find something                      */
    {
     if (objpoint == 0)
       {
@@ -4654,7 +4654,6 @@ void restore(void)               /* Restore a game                      */
     n = values[RNDCOUNT];
     values[RNDCOUNT] = 0;
     for (i=1;i<n;i++) r = rnd(2);   /* and call rnd() n times           */
-    n = r;
     moveno = values[1];
     score = values[2];
     x = values[3];
