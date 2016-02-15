@@ -1,5 +1,5 @@
 chimaera: chimaera.c chimaera.h
-	gcc -Wno-comment -o $@ chimaera.c
+	gcc -o $@ chimaera.c
 
 clean:
 	rm -f chimaera

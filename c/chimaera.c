@@ -58,7 +58,6 @@ int main()
     int seed;                          /* Seed for srand()             */
     int itmp, jtmp, ktmp;              /* Temporary variables          */
     int apoint;                        /* Index to dicact[]            */
-/*    int tpoint;                        /* Index to thing[]             */
     int opoint;                        /* Index to object              */
     int mpoint;                        /* Index to move                */
     int monstpoint;                    /* Index to monster             */
@@ -257,20 +256,6 @@ int main()
              if (strstr(dicact[i],action) != NULL) apoint = i;
              if (apoint > 0 ) break;
             }
-/*          /* If action[] is an object[], reset object[] and nullify action[]                    */
-/*          CODE COMMENTED OUT PRO TEM                                                            */
-/*          if (strlen(object) == 0)                                                              */
-/*            {                                                                                   */
-/*             for (i=1;i<MAXOBJ;i++)                                                             */
-/*               {                                                                                */
-/*                if (strstr(thing[i],action) != NULL) tpoint = i;                                */
-/*                if (tpoint > 0 ) break;                                                         */
-/*               }                                                                                */
-/*             if (tpoint > 0)                                                                    */
-/*               {                                                                                */
-/*                memset(&object[0],'\0',11); strcat(object,action); memset(&action[0],'\0',11);  */
-/*               }                                                                                */
-/*            }                                                                                   */
          }
        if (strlen(object) > 0)
          {
@@ -1100,7 +1085,7 @@ void locwun(void)    /* Initialise object locations                     */
 /* games. The first 10 objects are distributed about on the plain, the  */
 /* probability of finding any one of them in any location is about 20:1 */
 /* The remaining objects are distributed underground at a probability   */
-/* of about 60:1
+/* of about 60:1                                                        */
 /* Objects (except the plant) are virtual and exist in many locations   */
 /* until picked up. The more plants can be encountered after the player */
 /* has picked them up - some are poisonous, some are not.               */
@@ -2670,14 +2655,6 @@ void examine(int objpoint)       /* Examine something                   */
       }
     showtext();
    }
-/*----
-IF (COMP$R(4,ACTION,'EXAM').NE.0) GOTO 470      /* Pardon?
-      CALL TNOUA(
-     +'',9)
-      CALL TNOU(
-     +'',23)
-
-----*/
 /*----------------------------------------------------------------------*/
 void fill(int objpoint)          /* Fill something                      */
    {
@@ -4185,45 +4162,6 @@ void status(void)                /* Establish a player's status         */
       }
     showtext();
    }
-/*----
-      SUBROUTINE STATUS(FLAG,SCORE)
-C*
-      LOGICAL   FLAG              /* Master status flag
-      INTEGER*2 SCORE             /* His score so far
-C*
-      INTEGER*2 MTRX(8)           /* Data for password construction
-      INTEGER*2 TMDATA(4)         /* Buffer for TIMDAT
-      INTEGER*2 PWRD(3)           /* Buffer for user-supplied password
-C*
-      DATA MTRX/'ACODUSENHRRDAUUD'/
-C*
-      IF (FLAG) RETURN            /* We already know that he is a master
-      CALL TNOUA('Are you in fact a Perfect Master? ',34)
-      CALL YESNO(FLAG)            /* Does he claim to be one?
-      IF (.NOT.FLAG) RETURN
-      CALL PASSWD('Prove it! Say the magic word',28,PWRD,6)
-      IF (PWRD(3).NE.'  ') GOTO 20     /* Ha!
-      CALL TIMDAT(TMDATA,4)       /* Get current date
-      TMDATA(4)='  '                   /*
-      N=NUFRD(TMDATA)                  /* These 3 lines calculate day of week (+
-      N=NINDW(N,TMDATA(3))+1           /*
-      TMDATA(1)=LT(TMDATA(2),8)+RS(MTRX(N),8)    /* Construct today's
-      TMDATA(2)=LS(TMDATA(2),8)+RT(MTRX(N),8)    /*   password
-      IF (TMDATA(1).NE.PWRD(1)) GOTO 20
-      IF (TMDATA(2).NE.PWRD(2)) GOTO 20
-      GOTO 30                     /* He is. (Flag already true)
-C*
-20    FLAG=.FALSE.                /* Trying to cheat eh?
-      CALL TNOU('Foo, you are just an imposter!',30)
-      CALL TNOU('That little piece of deception will cost you 10 points.
-     +..',57)
-      SCORE=SCORE-10
-C*
-30    TMDATA(1)=0
-      TMDATA(2)=0
-      TMDATA(3)=0
-
-----*/
 /*----------------------------------------------------------------------*/
 void adventure(void)             /* Simulate the beginning of ADVENTURE */
    {
