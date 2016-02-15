@@ -1,0 +1,197 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.centered {text-align:center}
+.ltext {text-align:left}
+.rtext {text-align:right}
+.ltd {text-align:left; padding:4px}
+.ctd {text-align:center; padding:4px}
+.rtd {text-align:right; padding:4px}
+table.frame {max-width:700px; width:98%; margin:auto}
+table.centab {margin:auto}
+</style>
+<title>Chimaera Version c1.001</title><style>.size {text-align:center;padding: 6px; border: solid 1px black}</style>
+
+</head>
+<body style='background-color:#d0e0ff;font-family:Arial,Helvetica,TimesNR' >
+<table class=frame><tr><td>
+
+(Fetched from <a href="http://www.mipmip.org/chimaera/chimaera.html">http://www.mipmip.org/chimaera/chimaera.html</a> on 2016-02-14.)
+
+<h2 class=centered><center>Chimaera Version c1.001</h2>
+<hr>
+<table class=main cellpadding=10><tr><td>
+The Fortran version of the classical Colossal Cave adventure was
+developed by Willie Crowther, Don Woods and Gary Palter.  This game,
+enjoyed by many of us in the 1970s, had about 80 locations and numerous
+puzzles to be solved.  If played optimally it could yield 360 points, at
+which stage "<i>a cheering band of friendly elves carry the conquering
+adventurer off into the sunset</i>". 
+
+<p>Colossal Cave was great fun but it had one major drawback - it was
+finite; you could eventually achieve a perfect score, become an
+Adventurer Grandmaster and that was that.  It might take many months to
+achieve perfection, but once you had done it what was left?  You could
+hang around the office enjoying the struggles of Novice Class
+Adventurers, perhaps dropping the occasion hint to help them on their
+way or you could get on with real life - such as it is.  I decided that
+it would be fun to try to write an adventure program which resembled
+real life in its scope and unpredictability.  The result, Chimaera, was
+first conceived in 1983 and implemented in Fortran in January 1984. 
+
+<p>A Chimaera is defined by the Concise Oxford Dictionary as:
+
+<blockquote><small>
+<i>n</i> <b>1</b>.  (Gk Myth.) Monster with lion's head, goat's body,
+and serpent's tail.  <b>2</b>.  Bogy; thing of hybrid character;
+fanciful conception; hence chimerical (k-) <i>a</i> <b>3</b>.  (Biol.)
+Organism formed by grafting etc.  from tissues of different genetic
+origin.  <b>4</b>.  (Zool.) Fish of family Chimaeridae.  [f.  L f.  Gk
+<i>khimaira</i> she-goat, chimera]
+</small></blockquote>
+
+The Chimaera is intended to be '<i>a thing of hybrid character and
+fanciful conception</i>'.  Superficially it resembles Colossal Cave
+(indeed there has been a little grafting) but it avoids many of the
+earlier program's limitations and there is no easily definable maximum
+score.  There are limits to the number of objects and creatures to be
+found, but some of these are virtual and do not even exist until certain
+conditions have been met.  Furthermore it appears to the user that there
+are an indefinite number of locations; the descriptions and properties
+of these are determined programmatically.  And to add further complexity
+there are 11 Chimaera adventures to choose from (<i>see below</i>). 
+
+<p>For over a decade Chimaera version 1.113 [Fortran] languished in the
+archives until a meeting with an old and valued friend early in 2002
+stimulated me to revisit the program.  I decided to recode it in ANSI C
+and the present program <b>Chimaera version c1.001</b> is the result. 
+
+<p>
+<h3>Concept:</h3>
+<ul>
+
+  <li>The object of the game is to amass as much treasure and other
+   property as possible in the tent at your base camp - which you have to
+   find at some stage.  There is no easily calculable maximum score but a
+   scores of more than 1,000 should be achievable. 
+
+  <p><li>There are 11 starting points (0-10), Games 1-10 are consistent
+   in that when they are replayed all locations and objects should appear
+   in the same places and sequence each time the game is played.  The
+   various creatures encountered will depend on the actual sequence of
+   moves made and may not always appear in the same places or at the same
+   times.  The starting point for Game 0 is chosen randomly and the chances
+   that any two such games will behave consistently are correspondingly
+   remote. 
+
+  <p><li>Each game begins with the message: "<i>You are standing on a
+   wide grassy plain; far off the snow clad tops of distant mountains gleam
+   in the rays of the rising sun.  Isolated trees are dotted about the
+   landscape and groups of animals can dimly be seen moving about some way
+   off.</i>" However, your actual starting point on the plain, the nature
+   of the local terrain, the location and distance of your base camp, and
+   the date and time of day depend on the game number you have selected. 
+   You may explore the plain, there are objects to find and various hazards
+   to encounter but the real adventure begins when you venture into the
+   depths, where the really valuable stuff and the main hazards and puzzles
+   are to be found. 
+
+  <p><li>Once you move from the starting place most locations and
+   situations are described by computationally generated text, over 20,000
+   location descriptions can be computed although not all may be accessible
+   to you.  This is because the possibilities for moving between adjacent
+   locations are usually limited.  Occasionally you may get into a place
+   from which there appears to be no exit, although you will usually be
+   warned if this is likely.  If you do get trapped there will usually be a
+   means of escape but it may not be obvious and will be expensive. 
+   Objects, creatures and puzzles to be solved will be encountered in an
+   apparently random (though consistent) manner.  As with Colossal Cave,
+   you may eventually be able find short cuts between locations. 
+
+  <p><li>Games may be saved and subsequently restored.  The geography of
+   a restored game will always be the same as the original but some objects
+   may have been moved by the elves whilst the game was in limbo.  You are
+   strongly advised to keep maps tracking your movements, with many
+   thousands of possible locations it is easy to get lost completely and if
+   you put something down you may never be able to find it again unless you
+   have a map. 
+
+   <p>A system of optionally available context-sensitive hints is being
+   developed but is unlikely to be fully functional before version c1.1 is
+   released. 
+
+   <p><li>In version c1.001 simple commands are used (as in the Colossal
+   Cave adventure).  Your input may be in lower, UPPER or MiXeD case and
+   most commands may be abbreviated to their first four characters.  The
+   program uses a fairly small set of commands; some of these may only
+   become available once certain conditions are met and others may
+   disappear after they have been used.  A dictionary is not provided and
+   the best way to find out if a word of command is recognised is to type
+   it in and see what happens.  The primary purpose of Chimaera is to pose
+   a set of interesting problems, not to entertain the user with a flashy
+   interface.  Fancy input parsing to handle 'natural language' input may
+   be introduced in a future version of Chimaera if I can be bothered to
+   get round to it. 
+
+</ul>
+</td></tr></table>
+
+<p>Players are graded according to their score when they leave
+the program.  So far very few players have progressed beyond the
+Apprentice grade.</p>
+
+<table class=centab style='border-collapse:collapse'>
+<tr>
+  <th class=size>Score</th>
+  <th class=size>Grade</th>
+  <th class=size>Score</th>
+  <th class=size>Grade</th>
+</tr>
+<tr>
+  <th class=size>0-99</th>
+  <td class=size>Rank Amateur</td>
+  <th class=size>100-199</th>
+  <td class=size>Novice</td>
+</tr>
+<tr>
+  <th class=size>200-299</th>
+  <td class=size>Apprentice</td>
+  <th class=size>300-399</th>
+  </th><td class=size>Student</td>
+</tr>
+<tr>
+  <th class=size>400-499</th>
+  <td class=size>Graduate</td>
+  <th class=size>500-599</th>
+  <td class=size>Third Class</td>
+</tr>
+<tr>
+  <th class=size>600-699</th>
+  <td class=size>Second Class</td>
+  <th class=size>700-799</th>
+  <td class=size>First Class</td>
+</tr>
+<tr>
+  <th class=size>800-899</th>
+  <td class=size>Master</td>
+  <th class=size>900-999</th>
+  <td class=size>Grand Master</td>
+</tr>
+<tr>
+  <th class=size>1000-</th>
+  <td class=size colspan=3>Supreme Champion</td>
+</tr>
+</table>
+
+<h2 class=centered>Enjoy!</h2>
+
+<hr>
+<p class=centered>
+  This document is &copy; Chris Newall 2002 and is freely available.<br>
+  It is not for sale or general publication. 
+</p>
+
+</body>
+</html>
