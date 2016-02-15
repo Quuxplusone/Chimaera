@@ -1,0 +1,19 @@
+Chimaera is written in the Prime dialect of Fortran IV. In addition to
+the usual Prime systems calls, it uses the following Glaxo specific
+library routines:
+
+  COMIN$ prompts user for terminal input
+  COMP$R compares two ascii sctrings
+  LENGTH establishes actual length of ascii string (omitting trailing blanks)
+  MOVE$R moves a given number of characters from one buffer to another
+  NEWLIN throws a new line
+  NINDW  work out day of week from "number of days since 1st jan 1970"
+  NUFRD  converts date to number of days since 1st Jan 1970
+  PASSWD obtains password without echoing it
+  SFIL$R space-fills a given number of words (byte pairs) in a buffer
+  TOKEN$ extracts a space-delimited token from a text buffer
+  TOVFIS displays a floating point number
+  UPCASE uppercases a string
+  ZFIL$R zero-fills a given number of words (byte pairs) in a buffer
+
+

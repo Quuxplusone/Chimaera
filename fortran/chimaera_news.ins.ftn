@@ -1,0 +1,46 @@
+C********************************************************************
+C*
+C*    News text (display pseudorandomly).
+C*
+      CALL TIMDAT(TIMBUF,28)
+      IF (MOD(TIMBUF(8),3).NE.0) GOTO 9999
+C*
+      CALL TONL
+      CALL TNOU(
+     +'==================================================',50)
+      CALL TONL
+      CALL TNOU('**** CHIMAERA NEWS ****',23)
+      CALL TONL
+C*
+C****      CALL TNOU(
+C****     +'Having trouble with space and time? If so use',45)
+C****      CALL TNOU(
+C****     +'TIME and WHERE to get a fix!',28)
+C*
+      CALL TONL
+C*
+C****      CALL TNOU('The dwarves seem more aggressive these days,',44)
+C****      CALL TNOU('you had better find out how to get rid of them!',47)
+C*
+C****      CALL TNOU(
+C****     +'Flickering lamps can no longer be relit indefinitely,',53)
+C****      CALL TNOU(
+C****     +'you must find a more permanent solution!',40)
+C*
+      CALL TNOU(
+     +'Help is precious, away from your camp you can only',50)
+      CALL TNOU(
+     +'use it twice. Save it for real emergencies only or you may ',59)
+      CALL TNOU(
+     +'get completely stuck underground. There is also a magic',55)
+      CALL TNOU(
+     +'word to assist you, but no-one has found it yet!!',49)
+C*
+      CALL TONL
+      CALL TNOU(
+     +'==================================================',50)
+      CALL TONL
+C*
+9999  CONTINUE
+C*
+C*********************************************************************
