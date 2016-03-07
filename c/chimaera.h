@@ -12,8 +12,9 @@
 /*                                                                      */
 /*  12 May 2003 Version C1.001A  Amended version code                   */
 /*                                                                      */
-/*---- Session logging -------------------------------------------------*/
-#define LOGGING    1   /*  Logging to file chimaera.log on=1, off=0     */
+/*---- Functionality switches ------------------------------------------*/
+#define LOGGING 1
+#define ALLOW_CHEATING 1
 
 /*---- System dependent settings ---------------------------------------*/
 #define DISPWIDTH 80   /*  Display width for text wrapping              */

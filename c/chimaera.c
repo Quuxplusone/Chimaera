@@ -2204,6 +2204,7 @@ void sleep(int i)                       /* Sleep for a while            */
       }
    }
 /*----------------------------------------------------------------------*/
+#if ALLOW_CHEATING
 void cheat(void)                        /* Display current settings     */
    {
     int i, j, len;
@@ -2325,6 +2326,12 @@ void cheat(void)                        /* Display current settings     */
          }
       }
    }
+#else
+void cheat()
+{
+    printf("There are no wizards in this game.\n");
+}
+#endif
 /*----------------------------------------------------------------------*/
 void swearbox(char * token)   /* Fine for using a naughty word          */
    {
@@ -4110,6 +4117,7 @@ void slumber(void)               /* Go to sleep                         */
     showtext();
    }
 /*----------------------------------------------------------------------*/
+#if ALLOW_CHEATING
 void status(void)                /* Establish a player's status         */
    {
     int len, yn;
@@ -4168,6 +4176,7 @@ void status(void)                /* Establish a player's status         */
       }
     showtext();
    }
+#endif
 /*----------------------------------------------------------------------*/
 void adventure(void)             /* Simulate the beginning of ADVENTURE */
    {
