@@ -21,15 +21,29 @@ static unsigned int hash(unsigned int seed, const char *s)
     unsigned char *p;
     for (p = (unsigned char*)s; *p != '\0'; p++) {
         seed *= 37;
-        seed += *p;
+        seed ^= *p;
     }
     return seed;
 }
 
 int lrng(Location loc, const char *salt)
 {
-    char xyz[] = { x_of(loc) + 1, y_of(loc) + 1, z_of(loc) + 1, '\0' };
-    return hash(hash(0, xyz), salt) & 0x7fff;
+    // Get a random number based on the hash of a single location.
+    char xyz[] = { global_seed, x_of(loc) + 1, y_of(loc) + 1, z_of(loc) + 1, '\0' };
+    return hash(hash(0, xyz), salt) >> 4;
+}
+
+int llrng(Location loc, Location loc2, const char *salt)
+{
+    // Get a random number based on the hash of an UNORDERED pair of locations.
+    // This function must remain symmetrical: llrng(a,b,s) == llrng(b,a,s).
+    if (loc2 < loc) {
+        Location temp = loc;
+        loc = loc2;
+        loc2 = temp;
+    }
+    char xyz[] = { global_seed, x_of(loc) + 1, y_of(loc) + 1, z_of(loc) + 1, x_of(loc2) + 1, y_of(loc2) + 1, z_of(loc2) + 1, '\0' };
+    return hash(hash(0, xyz), salt) >> 4;
 }
 
 int lrng_one_in(int chance, Location loc, const char *salt)
@@ -37,47 +51,92 @@ int lrng_one_in(int chance, Location loc, const char *salt)
     return lrng(loc, salt) % chance == 0;
 }
 
-static unsigned int get_direction_mask(int x, int y, int z)
+int lrng_two_in(int chance, Location loc, const char *salt)
 {
-    const Location loc = xyz(x, y, z);
-    return lrng(loc, "get_direction_mask");
+    return lrng(loc, salt) % chance <= 1;
 }
 
-static struct Exits get_raw_directions(Location loc)
+int llrng_one_in(int chance, Location loc, Location loc2, const char *salt)
+{
+    return llrng(loc, loc2, salt) % chance == 0;
+}
+
+static Location get_raw_neighbor(Location loc, MotionWord mot)
 {
     const int x = x_of(loc);
     const int y = y_of(loc);
     const int z = z_of(loc);
-    const int mymask = get_direction_mask(x, y, z);
-    struct Exits result;
-    for (int m=MIN_MOTION; m <= MAX_MOTION; ++m) {
-        result.go[m] = NOWHERE;
+    switch (mot) {
+        case N: return (x+1 > MAP_MAX) ? NOWHERE : xyz(x+1, y, z);
+        case S: return (x-1 < 0)       ? NOWHERE : xyz(x-1, y, z);
+        case E: return (y+1 > MAP_MAX) ? NOWHERE : xyz(x, y+1, z);
+        case W: return (y-1 < 0)       ? NOWHERE : xyz(x, y-1, z);
+        case D: return (z+1 > MAP_MAX) ? NOWHERE : xyz(x, y, z+1);
+        case U: return (z-1 < 0)       ? NOWHERE : xyz(x, y, z-1);
+        case NW: return (x+1 > MAP_MAX || y-1 < 0)       ? NOWHERE : xyz(x+1, y-1, z);
+        case NE: return (x+1 > MAP_MAX || y+1 > MAP_MAX) ? NOWHERE : xyz(x+1, y+1, z);
+        case SW: return (x-1 < 0       || y-1 < 0)       ? NOWHERE : xyz(x-1, y-1, z);
+        case SE: return (x-1 < 0       || y+1 > MAP_MAX) ? NOWHERE : xyz(x-1, y+1, z);
+        default: return NOWHERE;
     }
-    if (x+1 < MAP_MAX && (mymask & 0x01) && (get_direction_mask(x+1, y, z) & 0x02)) { result.go[N] = xyz(x+1, y, z); }
-    if (x-1 >= 0      && (mymask & 0x02) && (get_direction_mask(x-1, y, z) & 0x01)) { result.go[S] = xyz(x-1, y, z); }
-    if (y+1 < MAP_MAX && (mymask & 0x04) && (get_direction_mask(x, y+1, z) & 0x08)) { result.go[E] = xyz(x, y+1, z); }
-    if (y-1 >= 0      && (mymask & 0x08) && (get_direction_mask(x, y-1, z) & 0x04)) { result.go[W] = xyz(x, y-1, z); }
-    if (z+1 < MAP_MAX && (mymask & 0x10) && (get_direction_mask(x, y, z+1) & 0x20)) { result.go[D] = xyz(x, y, z+1); }
-    if (z-1 >= 0      && (mymask & 0x20) && (get_direction_mask(x, y, z-1) & 0x10)) { result.go[U] = xyz(x, y, z-1); }
+}
 
-    if (x+1 < MAP_MAX && y+1 < MAP_MAX && (mymask & 0x40) && (get_direction_mask(x+1, y+1, z) & 0x80)) { result.go[NE]  = xyz(x+1, y+1, z); }
-    if (x-1 >= 0      && y-1 >= 0      && (mymask & 0x80) && (get_direction_mask(x-1, y-1, z) & 0x40)) { result.go[SW]  = xyz(x-1, y-1, z); }
-    if (x-1 >= 0      && y+1 < MAP_MAX && (mymask & 0x100) && (get_direction_mask(x-1, y+1, z) & 0x200)) { result.go[SE]  = xyz(x-1, y+1, z); }
-    if (x+1 < MAP_MAX && y-1 >= 0      && (mymask & 0x200) && (get_direction_mask(x+1, y-1, z) & 0x100)) { result.go[NW]  = xyz(x+1, y-1, z); }
-
+static struct Exits get_raw_exits(Location loc)
+{
+    struct Exits result;
+    for (MotionWord mot = MIN_MOTION; mot <= MAX_MOTION; ++mot) {
+        result.go[mot] = get_raw_neighbor(loc, mot);
+    }
     return result;
 }
 
-static struct Exits get_wiggled_directions(Location loc)
+static struct Exits get_constrained_cave_exits(Location loc)
 {
-    struct Exits result = get_raw_directions(loc);
+    struct Exits result = get_raw_exits(loc);
+    for (MotionWord mot = MIN_MOTION; mot <= MAX_MOTION; ++mot) {
+        if (result.go[mot] == NOWHERE) {
+            // ok, it's on the edge of the map already
+        } else if (llrng_one_in(4, loc, result.go[mot], "allow_exit")) {
+            // ok, allow this exit 25% of the time
+        } else {
+            result.go[mot] = NOWHERE;  // block 75% of the exits
+        }
+    }
+    return result;
+}
+
+static struct Exits get_overworld_exits(Location loc)
+{
+    assert(is_overworld(loc));
+
+    const bool forested = is_forested(loc);
+    struct Exits result = get_raw_exits(loc);
+    for (MotionWord mot = MIN_MOTION; mot <= MAX_MOTION; ++mot) {
+        if (result.go[mot] == NOWHERE) {
+            // ok, it's on the edge of the map already
+        } else {
+            if (forested && is_forested(result.go[mot])) {
+                if (llrng_one_in(2, loc, result.go[mot], "block_exit")) {
+                    result.go[mot] = NOWHERE;
+                }
+            }
+        }
+    }
+    result.go[D] = get_constrained_cave_exits(loc).go[D];  // match up the tops and bottoms of overworld stairs
+    return result;
+}
+
+static struct Exits get_wiggled_cave_exits(Location loc)
+{
+    assert(!is_overworld(loc));
+    struct Exits result = get_constrained_cave_exits(loc);
 
 #define WIGGLE(n, nw, ne) do { \
         if (result.go[n] != NOWHERE) { \
-            if (result.go[nw] == NOWHERE && lrng_one_in(10, loc, "wiggle" #n #nw)) { \
+            if (result.go[nw] == NOWHERE && lrng_one_in(6, loc, "wiggle" #n #nw)) { \
                 result.go[nw] = result.go[n]; \
                 result.go[n] = NOWHERE; \
-            } else if (result.go[ne] == NOWHERE && lrng_one_in(9, loc, "wiggle" #n #ne)) { \
+            } else if (result.go[ne] == NOWHERE && lrng_one_in(5, loc, "wiggle" #n #ne)) { \
                 result.go[ne] = result.go[n]; \
                 result.go[n] = NOWHERE; \
             } \
@@ -98,8 +157,34 @@ static struct Exits get_wiggled_directions(Location loc)
 
 struct Exits get_exits(Location loc)
 {
-    struct Exits result = get_wiggled_directions(loc);
-    return result;
+    if (is_overworld(loc)) {
+        return get_overworld_exits(loc);
+    } else {
+        return get_wiggled_cave_exits(loc);
+    }
+}
+
+bool is_overworld(Location loc)
+{
+    return z_of(loc) == 0;
+}
+
+bool is_forested(Location loc)
+{
+    if (!is_overworld(loc)) {
+        return false;
+    }
+
+    const int x = x_of(loc);
+    const int y = y_of(loc);
+    const int z = z_of(loc);
+
+    int wood = 0;
+    for (int i = 2; i <= 8; i *= 2) {
+        const Location temp = xyz(x/i, y/i, z/i);
+        wood += lrng_one_in(2, temp, "forest");
+    }
+    return (wood >= 2);
 }
 
 bool has_light(Location loc)

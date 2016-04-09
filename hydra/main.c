@@ -21,6 +21,7 @@ extern int attempt_restore(void);
 #define SOFT_NL "\n"
 #endif /* Z_MACHINE */
 
+int global_seed = 1;
 static int turns;  // how many times we've read your commands
 static bool verbose_mode = false;
 
@@ -100,19 +101,20 @@ void look_around(Location loc, bool force_verbose)
         return;
     }
 
+    // Update the list of locations we've recently passed through.
     bool be_terse = false;
+    Location to_swap = loc;
     if (!force_verbose) {
         for (int i=0; i < 10; ++i) {
-            if (last_few_locations[i] == loc) {
+            Location temp = last_few_locations[i];
+            last_few_locations[i] = to_swap;
+            to_swap = temp;
+            if (to_swap == loc) {
                 be_terse = true;
                 break;
             }
         }
     }
-
-    // Update the list of locations we've recently passed through.
-    memmove(last_few_locations+1, last_few_locations, 9 * sizeof last_few_locations[0]);
-    last_few_locations[0] = loc;
 
     if (be_terse) {
         print_short_description(loc);
@@ -194,7 +196,11 @@ Location determine_next_newloc(Location loc, MotionWord mot)
 {
     const struct Exits exits = get_exits(loc);
     if (exits.go[mot] == NOWHERE) {
-        report_inapplicable_motion(mot);
+        if (is_forested(loc) && is_semicardinal(mot) && lrng_two_in(3, loc, "newloc")) {
+            puts("A tangle of branches blocks your way.");
+        } else {
+            report_inapplicable_motion(mot);
+        }
         return loc;
     }
     return exits.go[mot];
@@ -242,7 +248,6 @@ void simulate_an_adventure(Location xyz)
 
     while (true) {
         // Report the player's environs after movement.
-
         loc = newloc;
         look_around(loc, verbose_mode);
 

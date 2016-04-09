@@ -1,12 +1,12 @@
 # vbcc needs this environment variable so it can find its config file.
-export VBCC:=../vbcc
+export VBCC:=./vbcc
 
-VBCCZ = ../vbcc/bin/vc +z -c99 -O1 -DZ_MACHINE -DSAVE_AND_RESTORE -Iz-machine/include
+VBCCZ = ./vbcc/bin/vc +z -c99 -O1 -DZ_MACHINE -DSAVE_AND_RESTORE -Iz-machine/include
 MAXES = \$$MAX_ARRAYS=700 \
         \$$MAX_ZCODE_SIZE=38000 \
         \$$MAX_STATIC_DATA=48000
 
-SOURCES = main.c vocab.c map.c rooms.c
+SOURCES = main.c map.c rooms.c vocab.c
 S_SOURCES := $(patsubst %.c,z-machine/%.s,$(SOURCES))
 
 all: hydra

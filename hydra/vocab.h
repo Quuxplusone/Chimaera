@@ -1,4 +1,6 @@
 #pragma once
+#ifndef H_VOCAB
+#define H_VOCAB
 
 #define NOTHING 0
 
@@ -8,6 +10,8 @@ typedef enum {
 } WordClass;
 
 typedef enum {
+    // It is important for efficiency that MIN_MOTION be 1.
+    // It is important for correctness that N,S,E,W,NW,NE,SW,SE be contiguous.
     MIN_MOTION=1,
     N=MIN_MOTION,S,E,W,NW,NE,SW,SE,U,D,
     MAX_MOTION=D
@@ -35,6 +39,9 @@ typedef enum {
     MAX_MESSAGE=HELP
 } MessageWord;
 
+int lookup(const char *w);
 void build_vocabulary(void);
 WordClass word_class(int word);
-int lookup(const char *w);
+bool is_semicardinal(MotionWord mot);
+
+#endif // H_VOCAB

@@ -38,24 +38,6 @@ int lookup(const char *w)
 }
 #undef HASH_PRIME
 
-WordClass word_class(int word)
-{
-    if (word == NOTHING) {
-        return WordClass_None;
-    } else if (MIN_MOTION <= word && word <= MAX_MOTION) {
-        return WordClass_Motion;
-    } else if (MIN_OBJ <= word && word <= MAX_OBJ) {
-        return WordClass_Object;
-    } else if (MIN_ACTION <= word && word <= MAX_ACTION) {
-        return WordClass_Action;
-    } else if (MIN_MESSAGE <= word && word <= MAX_MESSAGE) {
-        return WordClass_Message;
-    } else {
-        assert(false);
-        return WordClass_None;
-    }
-}
-
 void build_vocabulary(void)
 {
     new_word("north", N); new_word("n", N);
@@ -103,4 +85,27 @@ void build_vocabulary(void)
     new_word("plove", ABRA);
     new_word("help", HELP);
     new_word("?", HELP);
+}
+
+WordClass word_class(int word)
+{
+    if (word == NOTHING) {
+        return WordClass_None;
+    } else if (MIN_MOTION <= word && word <= MAX_MOTION) {
+        return WordClass_Motion;
+    } else if (MIN_OBJ <= word && word <= MAX_OBJ) {
+        return WordClass_Object;
+    } else if (MIN_ACTION <= word && word <= MAX_ACTION) {
+        return WordClass_Action;
+    } else if (MIN_MESSAGE <= word && word <= MAX_MESSAGE) {
+        return WordClass_Message;
+    } else {
+        assert(false);
+        return WordClass_None;
+    }
+}
+
+bool is_semicardinal(MotionWord mot)
+{
+    return N <= mot && mot <= SE;
 }

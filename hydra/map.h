@@ -1,4 +1,6 @@
 #pragma once
+#ifndef H_MAP
+#define H_MAP
 
 #include <stdbool.h>
 #include "vocab.h"
@@ -24,9 +26,19 @@ int x_of(Location loc);
 int y_of(Location loc);
 int z_of(Location loc);
 
+extern int global_seed;
+
 int lrng(Location loc, const char *salt);
 int lrng_one_in(int chance, Location loc, const char *salt);
+int lrng_two_in(int chance, Location loc, const char *salt);
+
+int llrng(Location loc, Location loc2, const char *salt);
+int llrng_one_in(int chance, Location loc, Location loc2, const char *salt);
 
 struct Exits get_exits(Location loc);
 
+bool is_overworld(Location loc);
+bool is_forested(Location loc);
 bool has_light(Location loc);
+
+#endif // H_MAP
