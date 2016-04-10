@@ -26,8 +26,6 @@ int x_of(Location loc);
 int y_of(Location loc);
 int z_of(Location loc);
 
-extern int global_seed;
-
 int lrng(Location loc, const char *salt);
 int lrng_one_in(int chance, Location loc, const char *salt);
 int lrng_two_in(int chance, Location loc, const char *salt);
@@ -39,6 +37,7 @@ struct Exits get_exits(Location loc);
 
 bool is_overworld(Location loc);
 bool is_forested(Location loc);
-bool has_light(Location loc);
+bool has_up_stairs(Location loc);
+bool has_down_stairs(Location loc);
 
 #endif // H_MAP

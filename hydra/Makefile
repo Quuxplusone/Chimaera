@@ -6,7 +6,7 @@ MAXES = \$$MAX_ARRAYS=700 \
         \$$MAX_ZCODE_SIZE=38000 \
         \$$MAX_STATIC_DATA=48000
 
-SOURCES = main.c map.c rooms.c vocab.c
+SOURCES = distance.c main.c map.c npcs.c rooms.c util.c vocab.c
 S_SOURCES := $(patsubst %.c,z-machine/%.s,$(SOURCES))
 
 all: hydra

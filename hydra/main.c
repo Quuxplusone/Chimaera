@@ -6,9 +6,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "distance.h"
 #include "map.h"
-#include "vocab.h"
+#include "npcs.h"
 #include "rooms.h"
+#include "util.h"
+#include "vocab.h"
 
 #ifdef Z_MACHINE
 #ifdef SAVE_AND_RESTORE
@@ -21,9 +24,8 @@ extern int attempt_restore(void);
 #define SOFT_NL "\n"
 #endif /* Z_MACHINE */
 
-int global_seed = 1;
-static int turns;  // how many times we've read your commands
 static bool verbose_mode = false;
+
 
 /*========== Input routines. ==============================================
  */
@@ -89,6 +91,29 @@ void shift_words(void)
 /*========== Verbs. ===============================================
  */
 
+void describe_rabbits(Location loc)
+{
+    int rabbits_in_room = 0;
+    struct Rabbit *rabbit = NULL;
+    for (int i=0; i < number_of_rabbits; ++i) {
+        rabbits_in_room += (rabbits[i].loc == loc);
+        rabbit = &rabbits[i];
+    }
+    if (rabbits_in_room != 0) {
+        puts("");
+        if (rabbits_in_room == 1) {
+            printf("There is a fuzzy %s rabbit", rabbit->color);
+        } else {
+            printf("There are %d fuzzy little rabbits", rabbits_in_room);
+        }
+        if (is_overworld(loc)) {
+            printf(" munching grass nearby.\n");
+        } else {
+            printf(" in the room with you.\n");
+        }
+    }
+}
+
 void look_around(Location loc, bool force_verbose)
 {
     static Location last_few_locations[10] = {
@@ -122,12 +147,62 @@ void look_around(Location loc, bool force_verbose)
         print_long_description(loc);
     }
 
-    // Here is where we'd describe the scenery and objects at this location.
+    describe_rabbits(loc);
 }
 
 void attempt_inventory()
 {
     puts("You are carrying nothing.");
+}
+
+void attempt_abra(Location loc)
+{
+    if (number_of_rabbits < (int)DIM(rabbits)) {
+        struct Rabbit *rabbit = &rabbits[number_of_rabbits++];
+        *rabbit = create_rabbit(loc);
+        printf("Upon your utterance of the magic word, a fuzzy %s rabbit poofs into existence", rabbit->color);
+        if (ran(2)) {
+            struct Exits exits = get_exits(loc);
+            MotionWord m = (N + ran(8));  // one of the 8 semicardinal directions
+            assert(is_semicardinal(m));
+            if (exits.go[m] != NOWHERE) {
+                printf(" and hops away to the %s", dir_to_text(m));
+                rabbit->oldloc = loc;
+                rabbit->loc = exits.go[m];
+            } else {
+                printf(". Its nose twitches");
+            }
+        }
+        printf(".\n");
+    } else {
+        printf("Nothing happens.\n");
+    }
+}
+
+void attempt_abra_rabbit(Location loc)
+{
+    int rabbits_in_room = 0;
+    struct Rabbit *rabbit = NULL;
+    for (int i=0; i < number_of_rabbits; ++i) {
+        if (rabbits[i].loc == loc) {
+            rabbits_in_room += 1;
+            rabbit = &rabbits[i];
+        }
+    }
+    assert(1 <= rabbits_in_room && rabbits_in_room <= number_of_rabbits);
+    assert(rabbit != NULL);
+
+    const char *incantations[] = {
+        "wiggle your fingers at", "point dramatically at", "point toward",
+        "gesture vaguely in the direction of", "glare at"
+    };
+    printf("You %s the rabbit%s and intone the magic word.\n",
+        incantations[ran(DIM(incantations))], rabbits_in_room == 1 ? "" : "s");
+    printf("The%s%s rabbit disappears in a puff of smoke!\n",
+           rabbits_in_room == 1 ? "" : " ",
+           rabbits_in_room == 1 ? "" : rabbit->color);
+
+    *rabbit = rabbits[--number_of_rabbits];
 }
 
 
@@ -143,6 +218,107 @@ void quit(void)
     exit(0);
 }
 
+
+/*========== NPC movement. ================================================
+ */
+
+static MotionWord choose_random_exit(struct Exits *exits, Location to_avoid)
+{
+    MotionWord result = NOTHING;
+    MotionWord fallback_result = NOTHING;
+    int count = 0;
+    for (MotionWord mot = MIN_MOTION; mot <= MAX_MOTION; ++mot) {
+        if (exits->go[mot] == NOWHERE) {
+            // do nothing
+        } else if (exits->go[mot] == to_avoid) {
+            fallback_result = mot;
+        } else {
+            if (ran(++count) == 0) {
+                result = mot;
+            }
+        }
+    }
+    return (result != NOTHING) ? result : fallback_result;
+}
+
+static void attempt_moving_rabbit(Location loc, struct Rabbit *rabbit, int rabbits_in_room)
+{
+    struct Exits exits = get_exits(rabbit->loc);
+    MotionWord mot = choose_random_exit(&exits, rabbit->oldloc);
+    rabbit->oldloc = rabbit->loc;
+    rabbit->loc = exits.go[mot];
+    if (rabbit->oldloc == loc && rabbit->loc != loc) {
+        // Describe a rabbit leaving the player's current location.
+        printf("The ");
+        if (rabbits_in_room > 1 || ran(3) == 0) {
+            printf("%s ", rabbit->color);
+        }
+        printf("rabbit ");
+        if (mot == U) {
+            if (is_overworld(rabbit->loc)) {
+                printf("hops up the stairs");
+                if (!is_forested(rabbit->loc)) {
+                    printf(", its fur catching the sunlight as it disappears");
+                }
+                printf(".\n");
+            } else if (has_up_stairs(loc)) {
+                printf("hops upstairs.\n");
+            } else {
+                printf("hops away upward.\n");
+            }
+        } else if (mot == D) {
+            if (has_down_stairs(loc)) {
+                printf("hops downstairs.\n");
+            } else {
+                printf("hops away downward.\n");
+            }
+        } else {
+            printf("hops away to the %s.\n", dir_to_text(mot));
+        }
+    } else if (rabbit->oldloc != loc && rabbit->loc == loc) {
+        // Describe a rabbit arriving in the player's current location.
+        printf("A fuzzy %s rabbit ", rabbit->color);
+        MotionWord mot2 = get_direction_from(loc, rabbit->oldloc);
+        assert(mot2 != NOTHING);
+        if (mot2 == U) {
+            if (has_up_stairs(loc)) {
+                printf("hops in from upstairs.\n");
+            } else {
+                printf("hops in from above.\n");
+            }
+        } else if (mot2 == D) {
+            if (is_overworld(loc) || has_down_stairs(loc)) {
+                printf("hops up the stairs");
+            } else {
+                printf("hops in from below.\n");
+            }
+        } else {
+            printf("hops in from the %s.\n", dir_to_text(mot2));
+        }
+    }
+}
+
+void move_npcs(Location loc)
+{
+    int rabbits_in_room = 0;
+    for (int i=0; i < number_of_rabbits; ++i) {
+        rabbits_in_room += (rabbits[i].loc == loc);
+    }
+
+    for (int i=0; i < number_of_rabbits; ++i) {
+        struct Rabbit *rabbit = &rabbits[i];
+        bool should_move = false;
+        if (rabbit->oldloc == rabbit->loc) {
+            // A rabbit at rest tends to remain at rest.
+            should_move = (ran(6) == 0);
+        } else {
+            should_move = (ran(3) != 0);
+        }
+        if (should_move) {
+            attempt_moving_rabbit(loc, rabbit, rabbits_in_room);
+        }
+    }
+}
 
 /*========== Hints. =======================================================
  */
@@ -161,23 +337,6 @@ void advise_about_going_west(const char *word1)
 
 /*========== Main loop. ===================================================
  */
-
-MotionWord try_going_back_to(Location to, Location from)
-{
-    if (to == from) {
-        puts("Sorry, but I no longer seem to remember how you got here.");
-        return NOTHING;
-    }
-    const struct Exits exits = get_exits(from);
-    for (int mot = MIN_MOTION; mot <= MAX_MOTION; ++mot) {
-        if (exits.go[mot] == to) {
-            return mot;
-        }
-    }
-
-    puts("You can't get there from here.");
-    return NOTHING;
-}
 
 void report_inapplicable_motion(MotionWord mot)
 {
@@ -209,9 +368,6 @@ Location determine_next_newloc(Location loc, MotionWord mot)
 void print_message(MessageWord msg)
 {
     switch (msg) {
-        case ABRA:
-            puts("Good try, but that is an old worn-out magic word.");
-            break;
         case HELP:
             puts("I know of places, actions, and things. Most of my vocabulary" SOFT_NL
                  "describes places and is used to move you there. To move, try words" SOFT_NL
@@ -237,6 +393,21 @@ void print_message(MessageWord msg)
     }
 }
 
+static bool noun_is_valid(Location loc, ObjectWord obj)
+{
+    if (obj == RABBIT) {
+        for (int i=0; i < number_of_rabbits; ++i) {
+            if (rabbits[i].loc == loc) {
+                return true;
+            }
+        }
+        return false;
+    } else {
+        // No other object types yet.
+        return false;
+    }
+}
+
 void simulate_an_adventure(Location xyz)
 {
     Location oldloc = NOWHERE;
@@ -250,6 +421,8 @@ void simulate_an_adventure(Location xyz)
         // Report the player's environs after movement.
         loc = newloc;
         look_around(loc, verbose_mode);
+
+        move_npcs(loc);
 
         while (true) {
             int k;
@@ -270,8 +443,10 @@ void simulate_an_adventure(Location xyz)
                     goto try_move;
                 case WordClass_Object:
                     obj = k;
-
-                    // Here is where we'd check noun validity.
+                    if (!noun_is_valid(loc, obj)) {
+                        printf("I see no %s here.", word1);
+                        continue;
+                    }
 
                     if (*word2 != '\0') break;
                     if (verb != NOTHING) {
@@ -301,12 +476,19 @@ void simulate_an_adventure(Location xyz)
                 case GO:
                     puts("Where?");
                     continue;
-                case BACK:
-                    mot = try_going_back_to(oldloc, loc);
-                    if (mot != NOTHING) {
-                        goto try_move;
+                case BACK: {
+                    if (oldloc == loc) {
+                        puts("Sorry, but I no longer seem to remember how you got here.");
+                    } else {
+                        mot = get_direction_from(loc, oldloc);
+                        if (mot != NOTHING) {
+                            goto try_move;
+                        } else {
+                            puts("You can't get there from here.");
+                        }
                     }
                     continue;
+                }
                 case INVENTORY:
                     attempt_inventory();
                     continue;
@@ -317,6 +499,10 @@ void simulate_an_adventure(Location xyz)
                         ++look_count;
                     }
                     look_around(loc, true);
+                    continue;
+                }
+                case ABRA: {
+                    attempt_abra(loc);
                     continue;
                 }
                 case VERBOSE:
@@ -354,6 +540,18 @@ void simulate_an_adventure(Location xyz)
                 case GO:
                     puts("Where?");
                     continue;
+                case ABRA:
+                    if (obj == RABBIT) {
+                        attempt_abra_rabbit(loc);
+                    } else {
+                        puts("Eh?");
+                    }
+                    continue;
+                case LOOK:
+                    goto intransitive;
+                case INVENTORY:
+                case BACK:
+                case VERBOSE:
                 case QUIT:
 #ifdef SAVE_AND_RESTORE
                 case SAVE:

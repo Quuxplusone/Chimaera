@@ -19,13 +19,15 @@ typedef enum {
 
 typedef enum {
     MIN_OBJ=100,
-    LAMP=MIN_OBJ,
-    MAX_OBJ=LAMP
+    RABBIT=MIN_OBJ,
+    MAX_OBJ=RABBIT
 } ObjectWord;
 
 typedef enum {
     MIN_ACTION=200,
-    GO=MIN_ACTION, BACK, INVENTORY, LOOK, VERBOSE,
+    GO=MIN_ACTION, BACK, INVENTORY, LOOK,
+    ABRA,
+    VERBOSE,
 #ifdef SAVE_AND_RESTORE
     SAVE, RESTORE,
 #endif /* SAVE_AND_RESTORE */
@@ -35,7 +37,7 @@ typedef enum {
 
 typedef enum {
     MIN_MESSAGE=300,
-    ABRA=MIN_MESSAGE, HELP,
+    HELP=MIN_MESSAGE,
     MAX_MESSAGE=HELP
 } MessageWord;
 
@@ -43,5 +45,6 @@ int lookup(const char *w);
 void build_vocabulary(void);
 WordClass word_class(int word);
 bool is_semicardinal(MotionWord mot);
+const char *dir_to_text(MotionWord mot);
 
 #endif // H_VOCAB

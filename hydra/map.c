@@ -2,6 +2,7 @@
 #include <assert.h>
 
 #include "map.h"
+#include "util.h"
 #include "vocab.h"
 
 Location xyz(int x, int y, int z)
@@ -29,8 +30,8 @@ static unsigned int hash(unsigned int seed, const char *s)
 int lrng(Location loc, const char *salt)
 {
     // Get a random number based on the hash of a single location.
-    char xyz[] = { global_seed, x_of(loc) + 1, y_of(loc) + 1, z_of(loc) + 1, '\0' };
-    return hash(hash(0, xyz), salt) >> 4;
+    char xyz[] = { x_of(loc) + 1, y_of(loc) + 1, z_of(loc) + 1, '\0' };
+    return hash(hash(global_seed, xyz), salt) >> 4;
 }
 
 int llrng(Location loc, Location loc2, const char *salt)
@@ -42,8 +43,8 @@ int llrng(Location loc, Location loc2, const char *salt)
         loc = loc2;
         loc2 = temp;
     }
-    char xyz[] = { global_seed, x_of(loc) + 1, y_of(loc) + 1, z_of(loc) + 1, x_of(loc2) + 1, y_of(loc2) + 1, z_of(loc2) + 1, '\0' };
-    return hash(hash(0, xyz), salt) >> 4;
+    char xyz[] = { x_of(loc) + 1, y_of(loc) + 1, z_of(loc) + 1, x_of(loc2) + 1, y_of(loc2) + 1, z_of(loc2) + 1, '\0' };
+    return hash(hash(global_seed, xyz), salt) >> 4;
 }
 
 int lrng_one_in(int chance, Location loc, const char *salt)
@@ -187,7 +188,30 @@ bool is_forested(Location loc)
     return (wood >= 2);
 }
 
-bool has_light(Location loc)
+
+bool has_up_stairs(Location loc)
 {
-    return z_of(loc) == 0;
+    if (is_overworld(loc)) {
+        return false;
+    }
+    const struct Exits exits = get_exits(loc);
+    if (exits.go[U] == NOWHERE) {
+        return false;
+    } else if (z_of(loc) == 1) {
+        return true;
+    } else {
+        return llrng_one_in(3, loc, exits.go[U], "stairs");
+    }
+}
+
+bool has_down_stairs(Location loc)
+{
+    const struct Exits exits = get_exits(loc);
+    if (exits.go[D] == NOWHERE) {
+        return false;
+    } else if (z_of(loc) == 0) {
+        return true;
+    } else {
+        return llrng_one_in(3, loc, exits.go[D], "stairs");
+    }
 }
