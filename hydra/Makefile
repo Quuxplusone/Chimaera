@@ -23,7 +23,7 @@ z-machine/cstubs.s: z-machine/cstubs.c
 	$(VBCCZ) -c $< -o $@ -module-name=libc
 
 z-machine/%.s: %.c
-	$(VBCCZ) -c $< -o $@ -module-name=%
+	$(VBCCZ) -c $< -o $@ -module-name=$(patsubst %.c,%,$<)
 
 clean:
 	rm -f hydra hydra.z8 $(S_SOURCES)
