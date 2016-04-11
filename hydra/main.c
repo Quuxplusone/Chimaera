@@ -437,6 +437,8 @@ void simulate_an_adventure(Location xyz)
             switch (word_class(k)) {
                 case WordClass_None:
                     printf("Sorry, I don't know the word \"%s\".\n", word1);
+                    verb = NOTHING;
+                    obj = NOTHING;
                     goto cycle;
                 case WordClass_Motion:
                     mot = k;
@@ -444,7 +446,7 @@ void simulate_an_adventure(Location xyz)
                 case WordClass_Object:
                     obj = k;
                     if (!noun_is_valid(loc, obj)) {
-                        printf("I see no %s here.", word1);
+                        printf("I see no %s here.\n", word1);
                         continue;
                     }
 
@@ -570,8 +572,12 @@ void simulate_an_adventure(Location xyz)
     }
 }
 
-int main()
+int main(int argc, char **argv)
 {
+    if (argc == 2) {
+        global_seed = atoi(argv[1]);
+    }
+
 #ifdef Z_MACHINE
     puts("\n\n\n\n\n\n\n\n");
 #endif /* Z_MACHINE */

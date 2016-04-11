@@ -346,10 +346,14 @@ static void print_exit_descriptions(Location loc, struct Description desc)
     assert(!is_overworld(loc));
     assert(!desc.is_dead_end);
 
-    const struct Exits *exits = &desc.exits;
-    const bool describe_upstairs = (exits->go[U] != NOWHERE) && has_up_stairs(loc);
-    const bool describe_downstairs = (exits->go[D] != NOWHERE) && has_down_stairs(loc);
-    const int num_tunnels = count_unique_exits(exits) - describe_upstairs - describe_downstairs;
+    struct Exits exits = desc.exits;
+    const bool upstairs = (exits.go[U] != NOWHERE) && has_up_stairs(loc);
+    const bool downstairs = (exits.go[D] != NOWHERE) && has_down_stairs(loc);
+
+    if (upstairs) exits.go[U] = NOWHERE;
+    if (downstairs) exits.go[D] = NOWHERE;
+
+    const int num_tunnels = count_unique_exits(&exits);
 
     const char *tunnel_word = "tunnel";
     if (!strcmp(desc.noun, "tunnel") || !strcmp(desc.noun, "corridor") || !strncmp(desc.noun, "hall", 4)) {
@@ -363,18 +367,18 @@ static void print_exit_descriptions(Location loc, struct Description desc)
             break;
         }
         case 1: {
-            MotionWord dir1 = get_nth_exit(exits, 0);
+            MotionWord dir1 = get_nth_exit(&exits, 0);
             printf("A %s leads %s.\n", tunnel_word, dir_to_text(dir1));
             break;
         }
         case 2: {
-            MotionWord dir1 = get_nth_exit(exits, 0);
-            MotionWord dir2 = get_nth_exit(exits, 1);
+            MotionWord dir1 = get_nth_exit(&exits, 0);
+            MotionWord dir2 = get_nth_exit(&exits, 1);
             if (is_semicardinal(dir1) && is_semicardinal(dir2)) {
                 printf("There is %s to the %s and ",
-                    an_exit_description(loc, exits, dir1), dir_to_text(dir1));
+                    an_exit_description(loc, &exits, dir1), dir_to_text(dir1));
                 printf("%s to the %s.\n",
-                    an_exit_description(loc, exits, dir2), dir_to_text(dir2));
+                    an_exit_description(loc, &exits, dir2), dir_to_text(dir2));
             } else {
                 printf("%ss lead %s and %s.\n", Cap(tunnel_word), dir_to_text(dir1), dir_to_text(dir2));
             }
@@ -396,12 +400,13 @@ static void print_exit_descriptions(Location loc, struct Description desc)
                 } else if (effective_i != 0) {
                     printf(", ");
                 }
-                printf("%s", dir_to_text(get_nth_exit(exits, effective_i)));
+                MotionWord m = get_nth_exit(&exits, effective_i);
+                printf("%s", dir_to_text(m));
             }
             printf(".\n");
             if (index_of_exit_to_omit != 100) {
-                const MotionWord m = get_nth_exit(exits, index_of_exit_to_omit);
-                const struct Description dest_desc = get_raw_description(exits->go[m]);
+                const MotionWord m = get_nth_exit(&exits, index_of_exit_to_omit);
+                const struct Description dest_desc = get_raw_description(exits.go[m]);
                 if (m == U) {
                     printf("Above you is %s %s %s.\n",
                            an(dest_desc.adj1), dest_desc.adj1, desc.noun);
@@ -422,20 +427,20 @@ static void print_exit_descriptions(Location loc, struct Description desc)
         }
     }
 
-    if (describe_upstairs) {
+    if (upstairs) {
         if (z_of(loc) == 1) {
             printf("In the center of the room a marble staircase leads upward.\n");
-            if (describe_downstairs) {
+            if (downstairs) {
                 printf("Another set of stairs leads downward from the far end of the room.\n");
             }
         } else {
-            if (describe_downstairs) {
+            if (downstairs) {
                 printf("Stairs lead both up and down from here.\n");
             } else {
                 printf("Stairs lead up.\n");
             }
         }
-    } else if (describe_downstairs) {
+    } else if (downstairs) {
         printf("Stairs lead down.\n");
     }
 }
