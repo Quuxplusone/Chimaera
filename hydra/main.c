@@ -8,6 +8,7 @@
 
 #include "distance.h"
 #include "map.h"
+#include "objs.h"
 #include "npcs.h"
 #include "rooms.h"
 #include "util.h"
@@ -121,7 +122,9 @@ void look_around(Location loc, bool force_verbose)
         NOWHERE, NOWHERE, NOWHERE, NOWHERE, NOWHERE,
     };
 
-    if (false) {
+    const bool lighted = (here(LAMP, loc) && objs(LAMP).prop == 1) || has_light(loc);
+
+    if (!lighted) {
         puts("It is now pitch dark.  If you proceed you will most likely fall into a pit.");
         return;
     }
@@ -147,12 +150,114 @@ void look_around(Location loc, bool force_verbose)
         print_long_description(loc);
     }
 
+    /* Describe the objects at this location. */
+    for (ObjectWord t = MIN_OBJ; t <= MAX_OBJ; ++t) {
+        if (there(t, loc)) {
+            const char *obj_description = objs(t).desc[objs(t).prop];
+            if (obj_description != NULL) {
+                puts(obj_description);
+            }
+        }
+    }
+
     describe_rabbits(loc);
 }
 
 void attempt_inventory()
 {
-    puts("You are carrying nothing.");
+    bool holding_anything = false;
+    for (ObjectWord t = MIN_OBJ; t <= MAX_OBJ; ++t) {
+        if (toting(t)) {
+            if (!holding_anything) {
+                holding_anything = true;
+                puts("You are currently holding the following:");
+            }
+            printf(" %s\n", objs(t).name);
+        }
+    }
+    if (!holding_anything) {
+        puts("You're not carrying anything.");
+    }
+}
+
+void attempt_take(ObjectWord obj, Location loc)
+{
+    if (toting(obj)) {
+        puts("You are already carrying it!");
+    } else if (obj == BIRD) {
+        if (toting(ROD)) {
+            puts("The bird was unafraid at first, but as you approach it becomes disturbed and you cannot catch it.");
+        } else {
+            puts("You can catch the bird, but you cannot carry it.");
+        }
+    } else if (holding_count() >= 7) {
+        puts("You can't carry anything more.  You'll have to drop something first.");
+    } else if (obj == RABBIT) {
+        puts("The rabbit evades your clumsy attempt at capture.");
+    } else {
+        assert(there(obj, loc));
+        objs(obj).loc = INHAND;
+        puts("OK.");
+    }
+}
+
+void attempt_drop(ObjectWord obj, Location loc)
+{
+    if (!toting(obj)) {
+        puts("You aren't carrying it!");
+    } else {
+        objs(obj).loc = loc;
+        puts("OK.");
+    }
+}
+
+void attempt_on(Location loc)
+{
+    if (!here(LAMP, loc)) {
+        puts("You have no source of light.");
+    } else if (objs(LAMP).prop == 1) {
+        puts("Your lamp is already on!");
+    } else {
+        objs(LAMP).prop = 1;
+        puts("Your lamp is now on.");
+        if (!has_light(loc)) {
+            look_around(loc, true);
+        }
+    }
+}
+
+void attempt_off(Location loc)
+{
+    if (!here(LAMP, loc)) {
+        puts("You have no source of light.");
+    } else if (objs(LAMP).prop == 1) {
+        puts("Your lamp is already off!");
+    } else {
+        objs(LAMP).prop = 0;
+        puts("Your lamp is now off.");
+        if (!has_light(loc)) {
+            look_around(loc, true);
+        }
+    }
+}
+
+void attempt_wave(ObjectWord obj, Location loc)
+{
+    if (!toting(obj)) {
+        puts("You aren't carrying it!");
+    } else if (obj == LAMP && !has_light(loc)) {
+        puts("Shadows dance and sway on the walls.");
+    } else {
+        puts("Nothing happens.");
+        if (obj == ROD) {
+            const int r = rabbits_at(loc);
+            if (r == 1) {
+                puts("The rabbit looks at you expectantly.");
+            } else if (r >= 2) {
+                puts("The rabbits look at you expectantly.");
+            }
+        }
+    }
 }
 
 void attempt_abra(Location loc)
@@ -396,16 +501,29 @@ void print_message(MessageWord msg)
 static bool noun_is_valid(Location loc, ObjectWord obj)
 {
     if (obj == RABBIT) {
-        for (int i=0; i < number_of_rabbits; ++i) {
-            if (rabbits[i].loc == loc) {
-                return true;
-            }
-        }
-        return false;
+        return rabbits_at(loc) != 0;
     } else {
-        // No other object types yet.
-        return false;
+        return here(obj, loc);
     }
+}
+
+static ObjectWord single_object_at(Location loc)
+{
+    ObjectWord result = NOTHING;
+    for (ObjectWord obj = MIN_OBJ; obj <= MAX_OBJ; ++obj) {
+        if (obj == RABBIT) {
+            int r = rabbits_at(loc);
+            if (r == 0) continue;
+            if (r >= 2 || result != NOTHING) return NOTHING;
+            obj = RABBIT;
+        } else if (there(obj, loc)) {
+            if (result != NOTHING) {
+                return NOTHING;
+            }
+            result = obj;
+        }
+    }
+    return result;
 }
 
 void simulate_an_adventure(Location xyz)
@@ -420,6 +538,7 @@ void simulate_an_adventure(Location xyz)
     while (true) {
         // Report the player's environs after movement.
         loc = newloc;
+        materialize_objects_if_necessary(loc);
         look_around(loc, verbose_mode);
 
         move_npcs(loc);
@@ -503,6 +622,23 @@ void simulate_an_adventure(Location xyz)
                     look_around(loc, true);
                     continue;
                 }
+                case TAKE: {
+                    /* TAKE makes sense by itself if there's only one possible thing to take. */
+                    obj = single_object_at(loc);
+                    if (obj == NOTHING) {
+                        goto get_object;
+                    } else {
+                        goto transitive;
+                    }
+                }
+                case ON: {
+                    attempt_on(loc);
+                    continue;
+                }
+                case OFF: {
+                    attempt_off(loc);
+                    continue;
+                }
                 case ABRA: {
                     attempt_abra(loc);
                     continue;
@@ -532,6 +668,7 @@ void simulate_an_adventure(Location xyz)
                     if (yes("Do you really want to quit now?", "OK.", "OK.")) quit();
                     continue;
                 default:
+                get_object:
                     word1[0] = toupper(word1[0]);
                     printf("%s what?\n", word1);
                     goto cycle;
@@ -541,6 +678,17 @@ void simulate_an_adventure(Location xyz)
             switch (verb) {
                 case GO:
                     puts("Where?");
+                    continue;
+                case TAKE:
+                    attempt_take(obj, loc);
+                    continue;
+                case DROP:
+                    attempt_drop(obj, loc);
+                    continue;
+                case ON: case OFF:
+                    goto intransitive;
+                case WAVE:
+                    attempt_wave(obj, loc);
                     continue;
                 case ABRA:
                     if (obj == RABBIT) {
@@ -560,6 +708,9 @@ void simulate_an_adventure(Location xyz)
                 case RESTORE:
 #endif /* SAVE_AND_RESTORE */
                     puts("Eh?");
+                    continue;
+                default:
+                    puts("Sorry, I don't know how to do that.");
                     continue;
             }
         }
@@ -583,6 +734,7 @@ int main(int argc, char **argv)
 #endif /* Z_MACHINE */
 
     build_vocabulary();
+    initialize_objects();
     simulate_an_adventure(xyz(10,10,0));
     return 0;
 }

@@ -18,3 +18,12 @@ struct Rabbit create_rabbit(Location loc)
     result.color = ONE_OF(colors);
     return result;
 }
+
+int rabbits_at(Location loc)
+{
+    int result = 0;
+    for (int i=0; i < number_of_rabbits; ++i) {
+        result += (rabbits[i].loc == loc);
+    }
+    return result;
+}

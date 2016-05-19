@@ -30,11 +30,14 @@ int lrng(Location loc, const char *salt);
 int lrng_one_in(int chance, Location loc, const char *salt);
 int lrng_two_in(int chance, Location loc, const char *salt);
 
+int object_can_be_found_at(ObjectWord obj, Location loc, int pct);
+
 int llrng(Location loc, Location loc2, const char *salt);
 int llrng_one_in(int chance, Location loc, Location loc2, const char *salt);
 
 struct Exits get_exits(Location loc);
 
+bool has_light(Location loc);
 bool is_overworld(Location loc);
 bool is_forested(Location loc);
 bool has_up_stairs(Location loc);

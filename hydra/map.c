@@ -34,6 +34,12 @@ int lrng(Location loc, const char *salt)
     return hash(hash(global_seed, xyz), salt) >> 4;
 }
 
+int object_can_be_found_at(ObjectWord obj, Location loc, int pct)
+{
+    char xyz[] = { x_of(loc) + 1, y_of(loc) + 1, z_of(loc) + 1, (obj - MIN_OBJ), '\0' };
+    return (int)(hash(hash(global_seed, xyz), "at") >> 4) % 100 < pct;
+}
+
 int llrng(Location loc, Location loc2, const char *salt)
 {
     // Get a random number based on the hash of an UNORDERED pair of locations.
@@ -162,6 +168,18 @@ struct Exits get_exits(Location loc)
         return get_overworld_exits(loc);
     } else {
         return get_wiggled_cave_exits(loc);
+    }
+}
+
+bool has_light(Location loc)
+{
+    if (loc == NOWHERE) {
+        return false;
+    } else if (is_overworld(loc)) {
+        return true;
+    } else {
+        struct Exits exits = get_exits(loc);
+        return has_light(exits.go[U]);
     }
 }
 

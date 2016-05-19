@@ -20,13 +20,17 @@ typedef enum {
 typedef enum {
     MIN_OBJ=100,
     RABBIT=MIN_OBJ,
-    MAX_OBJ=RABBIT
+    BIRD,
+    LAMP,
+    ROD,
+    CLUB,
+    MAX_OBJ=CLUB
 } ObjectWord;
 
 typedef enum {
     MIN_ACTION=200,
     GO=MIN_ACTION, BACK, INVENTORY, LOOK,
-    ABRA,
+    TAKE, DROP, ON, OFF, WAVE, JUGGLE, ABRA,
     VERBOSE,
 #ifdef SAVE_AND_RESTORE
     SAVE, RESTORE,

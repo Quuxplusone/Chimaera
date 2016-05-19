@@ -72,16 +72,18 @@ void build_vocabulary(void)
     new_word("invent", INVENTORY);
     new_word("look", LOOK); new_word("examin", LOOK);
     new_word("touch", LOOK); new_word("descri", LOOK);
-    new_word("abra", ABRA);
-    new_word("abraca", ABRA);
-    new_word("opense", ABRA);
-    new_word("sesame", ABRA);
+    new_word("get", TAKE); new_word("take", TAKE);
+    new_word("catch", TAKE); new_word("captur", TAKE);
+    new_word("drop", DROP); new_word("releas", DROP); new_word("free", DROP);
+    new_word("light", ON); new_word("on", ON);
+    new_word("exting", OFF); new_word("off", OFF); new_word("douse", OFF);
+    new_word("wave", WAVE); new_word("shake", WAVE); new_word("swing", WAVE);
+    new_word("juggle", JUGGLE);
+    new_word("abra", ABRA); new_word("abraca", ABRA);
+    new_word("opense", ABRA); new_word("sesame", ABRA);
     new_word("shazam", ABRA);
-    new_word("hocus", ABRA);
-    new_word("pocus", ABRA);
-    new_word("xyzzy", ABRA);
-    new_word("plugh", ABRA);
-    new_word("plover", ABRA);
+    new_word("hocus", ABRA); new_word("pocus", ABRA);
+    new_word("xyzzy", ABRA); new_word("plugh", ABRA); new_word("plover", ABRA);
     new_word("verbos", VERBOSE);
 #ifdef SAVE_AND_RESTORE
     new_word("save", SAVE);
@@ -91,6 +93,10 @@ void build_vocabulary(void)
 
     new_word("rabbit", RABBIT); new_word("fuzzy", RABBIT);
     new_word("bunny", RABBIT); new_word("bunnie", RABBIT);
+    new_word("bird", BIRD);
+    new_word("lamp", LAMP); new_word("lanter", LAMP); new_word("headla", LAMP);
+    new_word("rod", ROD); new_word("wand", ROD);
+    new_word("club", CLUB); new_word("juggli", CLUB);
 
     /* Finally, our vocabulary is rounded out by words like HELP, which
      * trigger the printing of fixed messages. */
