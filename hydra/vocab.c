@@ -84,6 +84,7 @@ void build_vocabulary(void)
     new_word("shazam", ABRA);
     new_word("hocus", ABRA); new_word("pocus", ABRA);
     new_word("xyzzy", ABRA); new_word("plugh", ABRA); new_word("plover", ABRA);
+    new_word("accio", ACCIO);
     new_word("verbos", VERBOSE);
 #ifdef SAVE_AND_RESTORE
     new_word("save", SAVE);
@@ -97,6 +98,23 @@ void build_vocabulary(void)
     new_word("lamp", LAMP); new_word("lanter", LAMP); new_word("headla", LAMP);
     new_word("rod", ROD); new_word("wand", ROD);
     new_word("club", CLUB); new_word("juggli", CLUB);
+
+    new_word("gold", GOLD); new_word("nugget", GOLD);
+    new_word("diamon", DIAMONDS);
+    new_word("silver", SILVER); new_word("bars", SILVER);
+    new_word("jewelr", JEWELS); new_word("jewels", JEWELS);
+    new_word("coins", COINS);
+    new_word("chest", CHEST); new_word("treasu", CHEST);
+    new_word("eggs", EGGS); new_word("egg", EGGS);
+    new_word("nest", EGGS);
+    new_word("triden", TRIDENT);
+    new_word("ming", VASE); new_word("vase", VASE);
+    new_word("emeral", EMERALD);
+    new_word("platin", PYRAMID); new_word("pyrami", PYRAMID);
+    new_word("pearl", PEARL);
+    new_word("persia", RUG); new_word("rug", RUG);
+    new_word("spices", SPICES);
+    new_word("chain", CHAIN);
 
     /* Finally, our vocabulary is rounded out by words like HELP, which
      * trigger the printing of fixed messages. */

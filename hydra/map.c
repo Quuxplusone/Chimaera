@@ -2,6 +2,7 @@
 #include <assert.h>
 
 #include "map.h"
+#include "objs.h"
 #include "util.h"
 #include "vocab.h"
 
@@ -19,6 +20,7 @@ int z_of(Location loc) { return loc % MAP_MAX; }
 
 static unsigned int hash(unsigned int seed, const char *s)
 {
+    assert(s);
     unsigned char *p;
     for (p = (unsigned char*)s; *p != '\0'; p++) {
         seed *= 37;
@@ -34,10 +36,10 @@ int lrng(Location loc, const char *salt)
     return hash(hash(global_seed, xyz), salt) >> 4;
 }
 
-int object_can_be_found_at(ObjectWord obj, Location loc, int pct)
+int object_can_be_found_at(ObjectWord obj, Location loc)
 {
-    char xyz[] = { x_of(loc) + 1, y_of(loc) + 1, z_of(loc) + 1, (obj - MIN_OBJ), '\0' };
-    return (int)(hash(hash(global_seed, xyz), "at") >> 4) % 100 < pct;
+    char xyz[] = { x_of(loc) + 1, y_of(loc) + 1, z_of(loc) + 1, '\0' };
+    return (int)(hash(hash(global_seed, xyz), objs(obj).name) >> 4) % 100 < objs(obj).pct;
 }
 
 int llrng(Location loc, Location loc2, const char *salt)

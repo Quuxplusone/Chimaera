@@ -30,7 +30,7 @@ int lrng(Location loc, const char *salt);
 int lrng_one_in(int chance, Location loc, const char *salt);
 int lrng_two_in(int chance, Location loc, const char *salt);
 
-int object_can_be_found_at(ObjectWord obj, Location loc, int pct);
+int object_can_be_found_at(ObjectWord obj, Location loc);
 
 int llrng(Location loc, Location loc2, const char *salt);
 int llrng_one_in(int chance, Location loc, Location loc2, const char *salt);

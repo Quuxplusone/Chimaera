@@ -59,6 +59,7 @@ static const char *get_raw_adj1(Location loc)
         "impressive", "ornate", "arched", "imposing", "cramped",
         "gigantic", "tiny", "enormous", "low", "high", "narrow",
         "wide", "little", "big", "small", "large", "damp", "dry",
+        "magnificent",
     };
     return ONE_OF(raw_adjs, loc);
 }
@@ -141,7 +142,7 @@ static bool should_create_hallway(Location loc, struct Description *desc)
     return false;
 }
 
-static struct Description get_raw_cave_description(Location loc)
+static struct Description get_raw_cave_description(Location loc, bool verbose)
 {
     static char buffer[100];
     struct Description result;
@@ -160,7 +161,6 @@ static struct Description get_raw_cave_description(Location loc)
 
     result.adj1 = get_raw_adj1(loc);
     result.noun = get_raw_noun(loc);
-    result.exits = exits;
 
     if (should_create_hallway(loc, &result)) {
         MotionWord dir1 = get_nth_exit(&exits, 0);
@@ -172,16 +172,18 @@ static struct Description get_raw_cave_description(Location loc)
 
         const int deg = degrees_between(dir1, dir2);
         if (dir1 == E && dir2 == W) {
-            result.adj2 = "east-west";
+            result.adj1 = "east-west";
             if (lrng_one_in(3, loc, "sloping")) {
+                result.adj2 = result.adj1;
                 result.adj1 = "gently sloping";
             }
         } else if (dir1 == N && dir2 == S) {
-            result.adj2 = "north-south";
+            result.adj1 = "north-south";
             if (lrng_one_in(3, loc, "sloping")) {
+                result.adj2 = result.adj1;
                 result.adj1 = "gently sloping";
             }
-        } else {
+        } else if (verbose) {
             const bool can_omit_description_of_bend = (deg >= 135);
             if (can_omit_description_of_bend && lrng_two_in(3, loc, "leading")) {
                 static const char *leading_verbs[] = {
@@ -223,13 +225,13 @@ static struct Description get_raw_cave_description(Location loc)
         }
         result.exits.go[dir1] = NOWHERE;
         result.exits.go[dir2] = NOWHERE;
-    } else if (exits.go[U] != NOWHERE && z_of(loc) != 1 && lrng_one_in(3, loc, "below") && !lrng_one_in(3, exits.go[U], "above")) {
-        struct Description dest_desc = get_raw_cave_description(exits.go[U]);
+    } else if (verbose && exits.go[U] != NOWHERE && z_of(loc) != 1 && lrng_one_in(3, loc, "below") && !lrng_one_in(3, exits.go[U], "above")) {
+        struct Description dest_desc = get_raw_cave_description(exits.go[U], false);
         sprintf(buffer, "%s %s", dest_desc.adj1, dest_desc.noun);
         result.below = buffer;
         result.exits.go[U] = NOWHERE;
-    } else if (exits.go[D] != NOWHERE && lrng_one_in(3, loc, "above") && !lrng_one_in(3, exits.go[D], "below")) {
-        struct Description dest_desc = get_raw_cave_description(exits.go[D]);
+    } else if (verbose && exits.go[D] != NOWHERE && lrng_one_in(3, loc, "above") && !lrng_one_in(3, exits.go[D], "below")) {
+        struct Description dest_desc = get_raw_cave_description(exits.go[D], false);
         sprintf(buffer, "%s %s", dest_desc.adj1, dest_desc.noun);
         result.above = buffer;
         result.exits.go[D] = NOWHERE;
@@ -282,7 +284,7 @@ static struct Description get_raw_overworld_description(Location loc)
         result.noun = ONE_OF(raw_nouns, loc);
 
         int count_of_forested_neighbors = 0;
-        MotionWord forest_dirs[8];
+        MotionWord forest_dirs[MAX_MOTION - MIN_MOTION + 1];
         for (MotionWord m = MIN_MOTION; m <= MAX_MOTION; ++m) {
             if (exits.go[m] != NOWHERE) {
                 if (is_forested(exits.go[m])) {
@@ -307,12 +309,12 @@ static struct Description get_raw_overworld_description(Location loc)
     return result;
 }
 
-static struct Description get_raw_description(Location loc)
+static struct Description get_raw_description(Location loc, bool verbose)
 {
     if (is_overworld(loc)) {
         return get_raw_overworld_description(loc);
     } else {
-        return get_raw_cave_description(loc);
+        return get_raw_cave_description(loc, verbose);
     }
 }
 
@@ -321,7 +323,7 @@ const char *an_exit_description(Location loc, const struct Exits *exits, MotionW
     static char buffer[100];
     const Location destination = exits->go[dir];
     assert(destination != NOWHERE);
-    const struct Description dest_desc = get_raw_description(destination);
+    const struct Description dest_desc = get_raw_description(destination, false);
     static const char *exit_nouns[] = {
         "hall", "hallway", "passage", "corridor", "tunnel", "crawl", "squeeze", "crack"
     };
@@ -394,25 +396,25 @@ static void print_exit_descriptions(Location loc, struct Description desc)
             }
             printf("%ss lead ", Cap(tunnel_word));
             for (int i=0; i < num_nonomitted_exits; ++i) {
-                const int effective_i = i + (i >= index_of_exit_to_omit);
-                if (effective_i == num_tunnels-1) {
+                const int adjusted_i = i + (i >= index_of_exit_to_omit);
+                if (i == num_nonomitted_exits-1) {
                     printf(", and ");
-                } else if (effective_i != 0) {
+                } else if (i != 0) {
                     printf(", ");
                 }
-                MotionWord m = get_nth_exit(&exits, effective_i);
+                MotionWord m = get_nth_exit(&exits, adjusted_i);
                 printf("%s", dir_to_text(m));
             }
             printf(".\n");
             if (index_of_exit_to_omit != 100) {
                 const MotionWord m = get_nth_exit(&exits, index_of_exit_to_omit);
-                const struct Description dest_desc = get_raw_description(exits.go[m]);
+                const struct Description dest_desc = get_raw_description(exits.go[m], false);
                 if (m == U) {
                     printf("Above you is %s %s %s.\n",
                            an(dest_desc.adj1), dest_desc.adj1, desc.noun);
                 } else if (m == D) {
                     printf("Below you is %s %s %s.\n",
-                           an(dest_desc.adj1), dest_desc.adj1, desc.noun);
+                           an(dest_desc.adj1), dest_desc.adj1, dest_desc.noun);
                 } else if (lrng_one_in(2, loc, "omit3")) {
                     printf("There is %s %s %s to the %s.\n",
                            an(dest_desc.adj1), dest_desc.adj1, dest_desc.noun,
@@ -447,7 +449,7 @@ static void print_exit_descriptions(Location loc, struct Description desc)
 
 void print_short_description(Location loc)
 {
-    const struct Description desc = get_raw_description(loc);
+    const struct Description desc = get_raw_description(loc, true);
 
     if (desc.is_dead_end) {
         puts("Dead end.");
@@ -475,7 +477,7 @@ void print_short_description(Location loc)
 
 void print_long_description(Location loc)
 {
-    const struct Description desc = get_raw_description(loc);
+    const struct Description desc = get_raw_description(loc, true);
 
     if (desc.is_dead_end) {
         puts("Dead end.");

@@ -310,6 +310,18 @@ void attempt_abra_rabbit(Location loc)
     *rabbit = rabbits[--number_of_rabbits];
 }
 
+void attempt_accio(ObjectWord obj, Location loc)
+{
+    if (toting(obj)) {
+        puts("You are already carrying it!");
+    } else if (here(obj, loc) || (obj == RABBIT && rabbits_at(loc))) {
+        puts("I believe what you want is right here with you.");
+    } else {
+        apport(obj, INHAND);
+        puts("OK.");
+    }
+}
+
 
 /*========== Scoring and quitting. =========================================
  */
@@ -498,9 +510,11 @@ void print_message(MessageWord msg)
     }
 }
 
-static bool noun_is_valid(Location loc, ObjectWord obj)
+static bool noun_is_valid(Location loc, ObjectWord obj, ActionWord verb)
 {
-    if (obj == RABBIT) {
+    if (verb == ACCIO) {
+        return true;
+    } else if (obj == RABBIT) {
         return rabbits_at(loc) != 0;
     } else {
         return here(obj, loc);
@@ -564,7 +578,7 @@ void simulate_an_adventure(Location xyz)
                     goto try_move;
                 case WordClass_Object:
                     obj = k;
-                    if (!noun_is_valid(loc, obj)) {
+                    if (!noun_is_valid(loc, obj, verb)) {
                         printf("I see no %s here.\n", word1);
                         continue;
                     }
@@ -696,6 +710,9 @@ void simulate_an_adventure(Location xyz)
                     } else {
                         puts("Eh?");
                     }
+                    continue;
+                case ACCIO:
+                    attempt_accio(obj, loc);
                     continue;
                 case LOOK:
                     goto intransitive;
