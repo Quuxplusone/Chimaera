@@ -6,12 +6,14 @@
 #include "vocab.h"
 
 struct Object {
-    const char *name;
-    const char *desc[4];
+    const char *name;  // const
+    const char *desc[4];  // const
+    int pct;  // const
+    int min_level;  // const
+
     int prop;
     Location loc;
-    int pct;
-    int min_level;
+    bool worn;
 };
 
 struct Object objs_[(MAX_OBJ + 1) - MIN_OBJ];

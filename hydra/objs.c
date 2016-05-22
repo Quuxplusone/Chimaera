@@ -37,7 +37,7 @@ bool is_treasure(ObjectWord obj)
         case GOLD: case DIAMONDS: case SILVER: case JEWELS:
         case COINS: case CHEST: case EGGS: case TRIDENT:
         case VASE: case EMERALD: case PYRAMID: case PEARL:
-        case RUG: case SPICES: case CHAIN:
+        case RUG: case SPICES: case CHAIN: case ERING:
             return true;
         default:
             return false;
@@ -50,6 +50,7 @@ void apport(ObjectWord t, Location loc)
         objs(t).prop = 0;  // materialize it
     }
     objs(t).loc = loc;
+    objs(t).worn = false;
 }
 
 void materialize_objects_if_necessary(Location loc)
@@ -75,6 +76,7 @@ void initialize_objects(void)
     for (ObjectWord obj = MIN_OBJ; obj <= MAX_OBJ; ++obj) {
         objs(obj).prop = -1;
         objs(obj).loc = NOWHERE;
+        objs(obj).worn = false;
     }
     objs(RABBIT).prop = 0;
 
@@ -98,6 +100,7 @@ void initialize_objects(void)
     new_obj(4, 5, RUG, "Persian rug");
     new_obj(4, 5, SPICES, "Rare spices");
     new_obj(4, 5, CHAIN, "Golden chain");
+    new_obj(10, 20, ERING, "Engagement ring");
 
     // Rabbit descriptions are handled elsewhere.
     objs(BIRD).desc[0] = "A cheerful little bird is sitting here singing.";
@@ -114,7 +117,6 @@ void initialize_objects(void)
     objs(COINS).desc[0] = "There are many coins here!";
     objs(CHEST).desc[0] = "A pirate's treasure chest is here!";
     objs(EGGS).desc[0] = "There is a large nest here, full of golden eggs!";
-    objs(TRIDENT).name = "Jeweled trident";
     objs(TRIDENT).desc[0] = "There is a jewel-encrusted trident here!";
     objs(VASE).desc[0] = "There is a delicate, precious, Ming vase here!";
     objs(EMERALD).desc[0] = "There is an emerald here the size of a plover's egg!";
@@ -123,6 +125,7 @@ void initialize_objects(void)
     objs(RUG).desc[0] = "There is a Persian rug spread out on the floor!";
     objs(SPICES).desc[0] = "There are rare spices here!";
     objs(CHAIN).desc[0] = "There is a golden chain lying in a heap on the floor!";
+    objs(ERING).desc[0] = "There is a diamond-studded engagement ring here!";
 
 #undef new_obj
 }

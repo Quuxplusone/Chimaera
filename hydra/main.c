@@ -207,7 +207,28 @@ void attempt_drop(ObjectWord obj, Location loc)
         puts("You aren't carrying it!");
     } else {
         objs(obj).loc = loc;
+        objs(obj).worn = false;
         puts("OK.");
+    }
+}
+
+void attempt_wear(ObjectWord obj, Location loc)
+{
+    (void)loc;
+    if (objs(obj).worn) {
+        puts("You are already wearing it!");
+    } else if (!toting(obj) && holding_count() >= 7) {
+        puts("You can't carry anything more.  You'll have to drop something first.");
+    } else if (obj == JEWELS) {
+        puts("OK.");
+        objs(obj).loc = INHAND;
+        objs(obj).worn = true;
+    } else if (obj == ERING) {
+        puts("You put on the ring. It feels somehow... right.");
+        objs(obj).loc = INHAND;
+        objs(obj).worn = true;
+    } else {
+        puts("Don't be silly!");
     }
 }
 
@@ -698,6 +719,9 @@ void simulate_an_adventure(Location xyz)
                     continue;
                 case DROP:
                     attempt_drop(obj, loc);
+                    continue;
+                case WEAR:
+                    attempt_wear(obj, loc);
                     continue;
                 case ON: case OFF:
                     goto intransitive;

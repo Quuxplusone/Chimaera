@@ -75,6 +75,7 @@ void build_vocabulary(void)
     new_word("get", TAKE); new_word("take", TAKE);
     new_word("catch", TAKE); new_word("captur", TAKE);
     new_word("drop", DROP); new_word("releas", DROP); new_word("free", DROP);
+    new_word("wear", WEAR);
     new_word("light", ON); new_word("on", ON);
     new_word("exting", OFF); new_word("off", OFF); new_word("douse", OFF);
     new_word("wave", WAVE); new_word("shake", WAVE); new_word("swing", WAVE);
@@ -115,6 +116,7 @@ void build_vocabulary(void)
     new_word("persia", RUG); new_word("rug", RUG);
     new_word("spices", SPICES);
     new_word("chain", CHAIN);
+    new_word("ring", ERING); new_word("engage", ERING);
 
     /* Finally, our vocabulary is rounded out by words like HELP, which
      * trigger the printing of fixed messages. */
