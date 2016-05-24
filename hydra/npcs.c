@@ -1,4 +1,5 @@
 
+#include <assert.h>
 #include "npcs.h"
 #include "util.h"
 
@@ -7,16 +8,20 @@
 int number_of_rabbits = 0;
 struct Rabbit rabbits[10];
 
-struct Rabbit create_rabbit(Location loc)
+bool create_rabbit(Location loc)
 {
-    const char *colors[] = {
+    static const char *colors[] = {
         "white", "brown", "sandy-colored", "spotted", "black", "black and white", "yellow", "pink"
     };
-    struct Rabbit result;
-    result.oldloc = NOWHERE;
-    result.loc = loc;
-    result.color = ONE_OF(colors);
-    return result;
+    if (number_of_rabbits < 10) {
+        struct Rabbit *rabbit = &rabbits[number_of_rabbits++];
+        rabbit->oldloc = NOWHERE;
+        rabbit->loc = loc;
+        rabbit->color = ONE_OF(colors);
+        return true;
+    } else {
+        return false;
+    }
 }
 
 int rabbits_at(Location loc)
@@ -26,4 +31,26 @@ int rabbits_at(Location loc)
         result += (rabbits[i].loc == loc);
     }
     return result;
+}
+
+void capture_a_rabbit(Location loc)
+{
+    for (int i=0; i < number_of_rabbits; ++i) {
+        if (rabbits[i].loc == loc) {
+            rabbits[i].loc = INHAND;
+            return;
+        }
+    }
+    assert(false);
+}
+
+void release_a_rabbit(Location loc)
+{
+    for (int i=0; i < number_of_rabbits; ++i) {
+        if (rabbits[i].loc == INHAND) {
+            rabbits[i].loc = loc;
+            return;
+        }
+    }
+    assert(false);
 }

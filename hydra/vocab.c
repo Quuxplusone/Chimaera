@@ -78,6 +78,7 @@ void build_vocabulary(void)
     new_word("wear", WEAR);
     new_word("light", ON); new_word("on", ON);
     new_word("exting", OFF); new_word("off", OFF); new_word("douse", OFF);
+    new_word("pull", YANK); new_word("yank", YANK);
     new_word("wave", WAVE); new_word("shake", WAVE); new_word("swing", WAVE);
     new_word("juggle", JUGGLE);
     new_word("abra", ABRA); new_word("abraca", ABRA);
@@ -93,12 +94,14 @@ void build_vocabulary(void)
 #endif /* SAVE_AND_RESTORE */
     new_word("quit", QUIT);
 
+    new_word("lamp", LAMP); new_word("lanter", LAMP); new_word("headla", LAMP);
+    new_word("cage", CAGE); new_word("wicker", CAGE);
     new_word("rabbit", RABBIT); new_word("fuzzy", RABBIT);
     new_word("bunny", RABBIT); new_word("bunnie", RABBIT);
     new_word("bird", BIRD);
-    new_word("lamp", LAMP); new_word("lanter", LAMP); new_word("headla", LAMP);
     new_word("rod", ROD); new_word("wand", ROD);
     new_word("club", CLUB); new_word("juggli", CLUB);
+    new_word("anvil", ANVIL);
 
     new_word("gold", GOLD); new_word("nugget", GOLD);
     new_word("diamon", DIAMONDS);
@@ -106,8 +109,7 @@ void build_vocabulary(void)
     new_word("jewelr", JEWELS); new_word("jewels", JEWELS);
     new_word("coins", COINS);
     new_word("chest", CHEST); new_word("treasu", CHEST);
-    new_word("eggs", EGGS); new_word("egg", EGGS);
-    new_word("nest", EGGS);
+    new_word("eggs", EGGS); new_word("egg", EGGS); new_word("nest", EGGS);
     new_word("triden", TRIDENT);
     new_word("ming", VASE); new_word("vase", VASE);
     new_word("emeral", EMERALD);
@@ -116,6 +118,7 @@ void build_vocabulary(void)
     new_word("persia", RUG); new_word("rug", RUG);
     new_word("spices", SPICES);
     new_word("chain", CHAIN);
+    new_word("sword", SWORD); new_word("gleami", SWORD); new_word("elven", SWORD);
     new_word("ring", ERING); new_word("engage", ERING);
 
     /* Finally, our vocabulary is rounded out by words like HELP, which

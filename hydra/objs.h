@@ -24,7 +24,9 @@ bool toting(ObjectWord obj);
 bool here(ObjectWord obj, Location loc);
 bool there(ObjectWord obj, Location loc);
 int holding_count(void);
+bool is_immobile(ObjectWord obj);
 bool is_treasure(ObjectWord obj);
+bool is_wearable(ObjectWord obj);
 void apport(ObjectWord t, Location loc);
 
 void materialize_objects_if_necessary(Location loc);

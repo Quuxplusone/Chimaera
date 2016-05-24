@@ -26,6 +26,8 @@ extern int attempt_restore(void);
 #endif /* Z_MACHINE */
 
 static bool verbose_mode = false;
+static bool waved_rod_this_turn = false;
+static bool waved_rod_last_turn = false;
 
 
 /*========== Input routines. ==============================================
@@ -183,17 +185,50 @@ void attempt_inventory()
 void attempt_take(ObjectWord obj, Location loc)
 {
     if (toting(obj)) {
-        puts("You are already carrying it!");
-    } else if (obj == BIRD) {
-        if (toting(ROD)) {
-            puts("The bird was unafraid at first, but as you approach it becomes disturbed and you cannot catch it.");
+        if (obj == RABBIT && rabbits_at(loc) >= 1) {
+            puts("You are already carrying one!");
         } else {
-            puts("You can catch the bird, but you cannot carry it.");
+            puts("You are already carrying it!");
         }
+    } else if (obj == BIRD) {
+        if (objs(BIRD).prop == 1) {
+            assert(there(CAGE, loc));
+            objs(CAGE).loc = INHAND;
+            objs(BIRD).loc = INHAND;
+            puts("OK.");
+        } else if (toting(ROD)) {
+            puts("The bird was unafraid at first, but as you approach it becomes disturbed and you cannot catch it.");
+        } else if (toting(RABBIT) || !toting(CAGE)) {
+            puts("You can catch the bird, but you cannot carry it.");
+        } else {
+            objs(BIRD).loc = INHAND;
+            objs(BIRD).prop = 1;  // caged
+            puts("OK.");
+        }
+    } else if (obj == RABBIT) {
+        if (there(RABBIT, loc) && objs(RABBIT).prop == 1) {
+            assert(there(CAGE, loc));
+            objs(CAGE).loc = INHAND;
+            objs(RABBIT).loc = INHAND;
+            puts("OK.");
+        } else if (!toting(ROD)) {
+            puts("The rabbit was unafraid at first, but as you approach it becomes disturbed and you cannot catch it.");
+        } else if (!waved_rod_last_turn) {
+            puts("The rabbit evades your clumsy attempt at capture.");
+        } else if (toting(BIRD) || toting(RABBIT) || !toting(CAGE)) {
+            puts("You can catch the rabbit, but you cannot carry it.");
+        } else {
+            capture_a_rabbit(loc);
+            objs(RABBIT).loc = INHAND;
+            objs(RABBIT).prop = 1;  // caged
+            puts("OK.");
+        }
+    } else if (obj == SWORD) {
+        puts("You grasp the sword's hilt and give a mighty heave, but it does not come free.");
+    } else if (is_immobile(obj)) {
+        puts("You can't be serious!");
     } else if (holding_count() >= 7) {
         puts("You can't carry anything more.  You'll have to drop something first.");
-    } else if (obj == RABBIT) {
-        puts("The rabbit evades your clumsy attempt at capture.");
     } else {
         assert(there(obj, loc));
         objs(obj).loc = INHAND;
@@ -209,6 +244,25 @@ void attempt_drop(ObjectWord obj, Location loc)
         objs(obj).loc = loc;
         objs(obj).worn = false;
         puts("OK.");
+        switch (obj) {
+            case CAGE:
+                if (toting(BIRD)) {
+                    objs(BIRD).loc = loc;
+                } else if (toting(RABBIT)) {
+                    objs(RABBIT).loc = loc;
+                }
+                break;
+            case BIRD:
+                assert(objs(BIRD).prop == 1);
+                objs(BIRD).prop = 0;  // uncage it
+                break;
+            case RABBIT:
+                assert(objs(RABBIT).prop == 1);
+                objs(RABBIT).prop = 0;  // uncage it
+                objs(RABBIT).loc = NOWHERE;
+                release_a_rabbit(loc);
+                break;
+        }
     }
 }
 
@@ -217,7 +271,7 @@ void attempt_wear(ObjectWord obj, Location loc)
     (void)loc;
     if (objs(obj).worn) {
         puts("You are already wearing it!");
-    } else if (!toting(obj) && holding_count() >= 7) {
+    } else if (is_wearable(obj) && !toting(obj) && holding_count() >= 7) {
         puts("You can't carry anything more.  You'll have to drop something first.");
     } else if (obj == JEWELS) {
         puts("OK.");
@@ -228,6 +282,7 @@ void attempt_wear(ObjectWord obj, Location loc)
         objs(obj).loc = INHAND;
         objs(obj).worn = true;
     } else {
+        assert(!is_wearable(obj));
         puts("Don't be silly!");
     }
 }
@@ -251,7 +306,7 @@ void attempt_off(Location loc)
 {
     if (!here(LAMP, loc)) {
         puts("You have no source of light.");
-    } else if (objs(LAMP).prop == 1) {
+    } else if (objs(LAMP).prop == 0) {
         puts("Your lamp is already off!");
     } else {
         objs(LAMP).prop = 0;
@@ -266,7 +321,7 @@ void attempt_wave(ObjectWord obj, Location loc)
 {
     if (!toting(obj)) {
         puts("You aren't carrying it!");
-    } else if (obj == LAMP && !has_light(loc)) {
+    } else if (obj == LAMP && objs(LAMP).prop == 1 && !has_light(loc)) {
         puts("Shadows dance and sway on the walls.");
     } else {
         puts("Nothing happens.");
@@ -277,29 +332,34 @@ void attempt_wave(ObjectWord obj, Location loc)
             } else if (r >= 2) {
                 puts("The rabbits look at you expectantly.");
             }
+            waved_rod_this_turn = true;
         }
     }
 }
 
 void attempt_abra(Location loc)
 {
-    if (number_of_rabbits < (int)DIM(rabbits)) {
-        struct Rabbit *rabbit = &rabbits[number_of_rabbits++];
-        *rabbit = create_rabbit(loc);
-        printf("Upon your utterance of the magic word, a fuzzy %s rabbit poofs into existence", rabbit->color);
-        if (ran(2)) {
-            struct Exits exits = get_exits(loc);
-            MotionWord m = (N + ran(8));  // one of the 8 semicardinal directions
-            assert(is_semicardinal(m));
-            if (exits.go[m] != NOWHERE) {
-                printf(" and hops away to the %s", dir_to_text(m));
-                rabbit->oldloc = loc;
-                rabbit->loc = exits.go[m];
-            } else {
-                printf(". Its nose twitches");
+    if (waved_rod_last_turn) {
+        bool created = create_rabbit(loc);
+        if (created) {
+            struct Rabbit *rabbit = &rabbits[number_of_rabbits - 1];
+            printf("Upon your utterance of the magic word, a fuzzy %s rabbit poofs into existence", rabbit->color);
+            if (ran(2)) {
+                struct Exits exits = get_exits(loc);
+                MotionWord m = (N + ran(8));  // one of the 8 semicardinal directions
+                assert(is_semicardinal(m));
+                if (exits.go[m] != NOWHERE) {
+                    printf(" and hops away to the %s", dir_to_text(m));
+                    rabbit->oldloc = loc;
+                    rabbit->loc = exits.go[m];
+                } else {
+                    printf(". Its nose twitches");
+                }
             }
+            printf(".\n");
+        } else {
+            printf("Nothing happens.\n");
         }
-        printf(".\n");
     } else {
         printf("Nothing happens.\n");
     }
@@ -337,6 +397,34 @@ void attempt_accio(ObjectWord obj, Location loc)
         puts("You are already carrying it!");
     } else if (here(obj, loc) || (obj == RABBIT && rabbits_at(loc))) {
         puts("I believe what you want is right here with you.");
+    } else if (obj == BIRD) {
+        if (toting(RABBIT)) {
+            puts("I don't know how to do that.");
+        } else {
+            apport(CAGE, INHAND);
+            apport(BIRD, INHAND);
+            objs(BIRD).prop = 1;  // caged
+            puts("OK.");
+        }
+    } else if (obj == RABBIT) {
+        if (toting(BIRD)) {
+            puts("I don't know how to do that.");
+        } else {
+            bool created = create_rabbit(loc);
+            if (!created) {
+                puts("I don't know how to do that.");
+            } else {
+                capture_a_rabbit(loc);
+                apport(CAGE, INHAND);
+                apport(RABBIT, INHAND);
+                objs(RABBIT).prop = 1;  // caged
+                puts("OK.");
+            }
+        }
+    } else if (obj == SWORD) {
+        apport(SWORD, INHAND);
+        objs(SWORD).prop = 2;  // freed
+        puts("OK.");
     } else {
         apport(obj, INHAND);
         puts("OK.");
@@ -535,8 +623,8 @@ static bool noun_is_valid(Location loc, ObjectWord obj, ActionWord verb)
 {
     if (verb == ACCIO) {
         return true;
-    } else if (obj == RABBIT) {
-        return rabbits_at(loc) != 0;
+    } else if (obj == RABBIT && rabbits_at(loc) != 0) {
+        return true;
     } else {
         return here(obj, loc);
     }
@@ -551,7 +639,7 @@ static ObjectWord single_object_at(Location loc)
             if (r == 0) continue;
             if (r >= 2 || result != NOTHING) return NOTHING;
             obj = RABBIT;
-        } else if (there(obj, loc)) {
+        } else if (there(obj, loc) && !is_immobile(obj)) {
             if (result != NOTHING) {
                 return NOTHING;
             }
@@ -583,6 +671,8 @@ void simulate_an_adventure(Location xyz)
             verb = NOTHING;
             obj = NOTHING;
         cycle:
+            waved_rod_last_turn = waved_rod_this_turn;
+            waved_rod_this_turn = false;
             listen();  // get one or two words
             ++turns;
         parse:
@@ -660,10 +750,18 @@ void simulate_an_adventure(Location xyz)
                 case TAKE: {
                     /* TAKE makes sense by itself if there's only one possible thing to take. */
                     obj = single_object_at(loc);
-                    if (obj == NOTHING) {
-                        goto get_object;
-                    } else {
+                    if (obj != NOTHING) {
                         goto transitive;
+                    } else {
+                        goto get_object;
+                    }
+                }
+                case YANK: {
+                    if (there(SWORD, loc)) {
+                        obj = SWORD;
+                        goto transitive;
+                    } else {
+                        goto get_object;
                     }
                 }
                 case ON: {
@@ -715,6 +813,7 @@ void simulate_an_adventure(Location xyz)
                     puts("Where?");
                     continue;
                 case TAKE:
+                case YANK:
                     attempt_take(obj, loc);
                     continue;
                 case DROP:
