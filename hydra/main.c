@@ -858,8 +858,16 @@ void simulate_an_adventure(Location xyz)
     try_move:
         /* A major cycle comes to an end when a motion verb mot has been
          * given and we have computed the appropriate newloc accordingly. */
-        oldloc = loc;
         newloc = determine_next_newloc(loc, mot);
+        if (newloc == loc) {
+            /* We've already reported inapplicable motion. */
+        } else if (there(DOG, loc) && objs(DOG).prop == 0 && newloc != oldloc) {
+            puts("The dog snarls menacingly at you. You'd better not try to get by.");
+            newloc = loc;
+        } else {
+            /* Success! */
+            oldloc = loc;
+        }
     }
 }
 

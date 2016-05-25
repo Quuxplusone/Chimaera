@@ -35,6 +35,7 @@ int holding_count(void)
 bool is_immobile(ObjectWord obj)
 {
     switch (obj) {
+        case DOG:
         case ANVIL:
             return true;
         default:
@@ -108,10 +109,11 @@ void initialize_objects(void)
     }
     objs(RABBIT).prop = 0;
 
-    new_obj(0, 0, RABBIT, "Fuzzy rabbit in cage");
-    new_obj(0, 10, BIRD, "Little bird in cage");
+    new_obj(5, 10, DOG, "(Three-headed dog)");
     new_obj(0, 10, LAMP, "Brass lantern");
     new_obj(0, 5, CAGE, "Wicker cage");
+    new_obj(0, 0, RABBIT, "Fuzzy rabbit in cage");
+    new_obj(0, 10, BIRD, "Little bird in cage");
     new_obj(1, 5, ROD, "Black rod");
     new_obj(2, 5, CLUB, "Club with white stripe");
     new_obj(6, 10, ANVIL, "(Anvil)");
@@ -135,13 +137,15 @@ void initialize_objects(void)
     new_obj(10, 20, ERING, "Engagement ring");
 
     // Rabbit descriptions are handled elsewhere.
+    objs(DOG).desc[0] = "There is a ferocious three-headed dog slavering and snarling in the center of the room!";
+    objs(DOG).desc[1] = "You are being followed by a tame three-headed dog.";
     objs(LAMP).desc[0] = "There is a shiny brass lamp nearby.";
     objs(LAMP).desc[1] = "There is a lamp shining nearby.";
     objs(CAGE).desc[0] = "There is a small wicker cage discarded nearby.";
-    objs(BIRD).desc[0] = "A cheerful little bird is sitting here singing.";
-    objs(BIRD).desc[1] = "There is a little bird in the cage.";
     objs(RABBIT).desc[0] = "(Rabbit)";
     objs(RABBIT).desc[1] = "There is a fuzzy little rabbit in the cage.";
+    objs(BIRD).desc[0] = "A cheerful little bird is sitting here singing.";
+    objs(BIRD).desc[1] = "There is a little bird in the cage.";
     objs(ROD).desc[0] = "A three-foot black rod with a rusty star on an end lies nearby.";
     objs(CLUB).desc[0] = "A two-foot club with a white stripe on the end lies nearby.";
     objs(ANVIL).desc[0] = "In the center of the room is a great stone, to which is affixed an enormous rusty iron anvil.\n"

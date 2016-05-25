@@ -94,6 +94,8 @@ void build_vocabulary(void)
 #endif /* SAVE_AND_RESTORE */
     new_word("quit", QUIT);
 
+    new_word("dog", DOG); new_word("hound", DOG); new_word("puppy", DOG);
+    new_word("cerber", DOG); new_word("kerber", DOG); new_word("fluffy", DOG);
     new_word("lamp", LAMP); new_word("lanter", LAMP); new_word("headla", LAMP);
     new_word("cage", CAGE); new_word("wicker", CAGE);
     new_word("rabbit", RABBIT); new_word("fuzzy", RABBIT);
