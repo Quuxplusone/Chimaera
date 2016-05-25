@@ -252,7 +252,7 @@ static struct Description get_raw_overworld_description(Location loc)
 
     if (is_forested(loc)) {
         static const char *raw_adjs[] = {
-            "open", "dense", "patchy",
+            "open", "dense", "patchy", "oak",
         };
         result.adj1 = ONE_OF(raw_adjs, loc);
         result.noun = "forest";
@@ -275,10 +275,10 @@ static struct Description get_raw_overworld_description(Location loc)
         }
     } else {
         static const char *raw_adjs[] = {
-            "sunny", "dappled", "rolling", "grassy", "open"
+            "sunny", "dappled", "rolling", "gently rolling", "grassy", "open", "hilly", "flower-spotted"
         };
         static const char *raw_nouns[] = {
-            "meadow", "field", "plain"
+            "meadow", "field", "meadow", "field", "meadow", "field", "pasture"
         };
         result.adj1 = ONE_OF(raw_adjs, loc);
         result.noun = ONE_OF(raw_nouns, loc);
@@ -342,6 +342,18 @@ const char *an_exit_description(Location loc, const struct Exits *exits, MotionW
     return buffer;
 }
 
+static bool is_tunnel_word(const char *word)
+{
+    static const char *exit_nouns[] = {
+        "hall", "hallway", "passage", "corridor", "tunnel", "crawl", "squeeze", "crack"
+    };
+    for (int i=0; i < (int)DIM(exit_nouns); ++i) {
+        if (strcmp(exit_nouns[i], word) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
 
 static void print_exit_descriptions(Location loc, struct Description desc)
 {
@@ -357,11 +369,9 @@ static void print_exit_descriptions(Location loc, struct Description desc)
 
     const int num_tunnels = count_unique_exits(&exits);
 
-    const char *tunnel_word = "tunnel";
-    if (!strcmp(desc.noun, "tunnel") || !strcmp(desc.noun, "corridor") || !strncmp(desc.noun, "hall", 4)) {
+    const char *tunnel_word = lrng_one_in(2, loc, "tunnelword") ? "tunnel" : "passage";
+    if (strcmp(desc.noun, tunnel_word) == 0 || lrng_one_in(4, loc, "sidepass")) {
         tunnel_word = "side passage";
-    } else if (!strcmp(desc.noun, "tunnel") || lrng_one_in(2, loc, "tunnelword")) {
-        tunnel_word = "passage";
     }
 
     switch (num_tunnels) {
@@ -478,6 +488,7 @@ void print_short_description(Location loc)
 void print_long_description(Location loc)
 {
     const struct Description desc = get_raw_description(loc, true);
+    bool should_describe_moss = has_glowing_moss(loc);
 
     if (desc.is_dead_end) {
         puts("Dead end.");
@@ -502,6 +513,23 @@ void print_long_description(Location loc)
         printf(" above %s %s", an(desc.above), desc.above);
     } else if (desc.below != NULL) {
         printf(" below %s %s", an(desc.below), desc.below);
+    } else if (should_describe_moss && lrng_one_in(4, loc, "moss")) {
+        if (is_tunnel_word(desc.noun) && lrng_one_in(2, loc, "2moss")) {
+            printf(" lined with glowing moss");
+        } else {
+            printf(" whose walls are covered with glowing moss");
+        }
+        should_describe_moss = false;
+    }
+
+    if (should_describe_moss) {
+        if (lrng_one_in(4, loc, "3moss")) {
+            printf(". The walls%s are covered with eerily glowing moss", lrng_one_in(2, loc, "4moss") ? " and ceiling" : "");
+        } else {
+            const MotionWord which_wall = get_random_semicardinal(lrng(loc, "5moss"));
+            printf(". The %s wall is covered with glowing moss", dir_to_text(which_wall));
+        }
+        should_describe_moss = false;
     }
     printf(".\n");
 

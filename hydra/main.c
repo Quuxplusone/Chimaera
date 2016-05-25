@@ -94,6 +94,17 @@ void shift_words(void)
 /*========== Verbs. ===============================================
  */
 
+static bool player_has_light(Location loc)
+{
+    if (toting(MOSS)) {
+        return true;
+    } else if (here(LAMP, loc) && objs(LAMP).prop == 1) {
+        return true;
+    } else {
+        return has_light(loc);
+    }
+}
+
 void describe_rabbits(Location loc)
 {
     int rabbits_in_room = 0;
@@ -124,10 +135,8 @@ void look_around(Location loc, bool force_verbose)
         NOWHERE, NOWHERE, NOWHERE, NOWHERE, NOWHERE,
     };
 
-    const bool lighted = (here(LAMP, loc) && objs(LAMP).prop == 1) || has_light(loc);
-
-    if (!lighted) {
-        puts("It is now pitch dark.  If you proceed you will most likely fall into a pit.");
+    if (!player_has_light(loc)) {
+        puts("It is now pitch dark. If you proceed you will most likely fall into a pit.");
         return;
     }
 
@@ -228,10 +237,23 @@ void attempt_take(ObjectWord obj, Location loc)
     } else if (is_immobile(obj)) {
         puts("You can't be serious!");
     } else if (holding_count() >= 7) {
-        puts("You can't carry anything more.  You'll have to drop something first.");
+        puts("You can't carry anything more. You'll have to drop something first.");
+    } else if (obj == MOSS) {
+        assert(has_glowing_moss(loc));
+        assert(!materialized(MOSS));  // because that's the only way you couldn't be carrying it
+        apport(MOSS, INHAND);
+        objs(MOSS).prop = 6 + ran(10);  // turns of light
+        puts("You loosen a handful of glowing moss from the wall.");
     } else {
         assert(there(obj, loc));
         objs(obj).loc = INHAND;
+        if (obj == CAGE) {
+            if (objs(RABBIT).prop == 1) {
+                objs(RABBIT).loc = INHAND;
+            } else if (objs(BIRD).prop == 1) {
+                objs(BIRD).loc = INHAND;
+            }
+        }
         puts("OK.");
     }
 }
@@ -240,6 +262,12 @@ void attempt_drop(ObjectWord obj, Location loc)
 {
     if (!toting(obj)) {
         puts("You aren't carrying it!");
+    } else if (obj == MOSS) {
+        printf("You drop the moss, which goes out as it hits the %s.\n", is_overworld(loc) ? "ground" : "floor");
+        dematerialize(MOSS);
+        if (!player_has_light(loc)) {
+            look_around(loc, true);
+        }
     } else {
         objs(obj).loc = loc;
         objs(obj).worn = false;
@@ -272,7 +300,7 @@ void attempt_wear(ObjectWord obj, Location loc)
     if (objs(obj).worn) {
         puts("You are already wearing it!");
     } else if (is_wearable(obj) && !toting(obj) && holding_count() >= 7) {
-        puts("You can't carry anything more.  You'll have to drop something first.");
+        puts("You can't carry anything more. You'll have to drop something first.");
     } else if (obj == JEWELS) {
         puts("OK.");
         objs(obj).loc = INHAND;
@@ -294,9 +322,10 @@ void attempt_on(Location loc)
     } else if (objs(LAMP).prop == 1) {
         puts("Your lamp is already on!");
     } else {
+        const bool should_look = !player_has_light(loc);
         objs(LAMP).prop = 1;
         puts("Your lamp is now on.");
-        if (!has_light(loc)) {
+        if (should_look) {
             look_around(loc, true);
         }
     }
@@ -311,7 +340,7 @@ void attempt_off(Location loc)
     } else {
         objs(LAMP).prop = 0;
         puts("Your lamp is now off.");
-        if (!has_light(loc)) {
+        if (!player_has_light(loc)) {
             look_around(loc, true);
         }
     }
@@ -321,7 +350,7 @@ void attempt_wave(ObjectWord obj, Location loc)
 {
     if (!toting(obj)) {
         puts("You aren't carrying it!");
-    } else if (obj == LAMP && objs(LAMP).prop == 1 && !has_light(loc)) {
+    } else if (gives_light(obj) && !has_light(loc)) {
         puts("Shadows dance and sway on the walls.");
     } else {
         puts("Nothing happens.");
@@ -473,53 +502,55 @@ static void attempt_moving_rabbit(Location loc, struct Rabbit *rabbit, int rabbi
     MotionWord mot = choose_random_exit(&exits, rabbit->oldloc);
     rabbit->oldloc = rabbit->loc;
     rabbit->loc = exits.go[mot];
-    if (rabbit->oldloc == loc && rabbit->loc != loc) {
-        // Describe a rabbit leaving the player's current location.
-        printf("The ");
-        if (rabbits_in_room > 1 || ran(3) == 0) {
-            printf("%s ", rabbit->color);
-        }
-        printf("rabbit ");
-        if (mot == U) {
-            if (is_overworld(rabbit->loc)) {
-                printf("hops up the stairs");
-                if (!is_forested(rabbit->loc)) {
-                    printf(", its fur catching the sunlight as it disappears");
+    if (player_has_light(loc)) {
+        if (rabbit->oldloc == loc && rabbit->loc != loc) {
+            // Describe a rabbit leaving the player's current location.
+            printf("The ");
+            if (rabbits_in_room > 1 || ran(3) == 0) {
+                printf("%s ", rabbit->color);
+            }
+            printf("rabbit ");
+            if (mot == U) {
+                if (is_overworld(rabbit->loc)) {
+                    printf("hops up the stairs");
+                    if (!is_forested(rabbit->loc)) {
+                        printf(", its fur catching the sunlight as it disappears");
+                    }
+                    printf(".\n");
+                } else if (has_up_stairs(loc)) {
+                    printf("hops upstairs.\n");
+                } else {
+                    printf("hops away upward.\n");
                 }
-                printf(".\n");
-            } else if (has_up_stairs(loc)) {
-                printf("hops upstairs.\n");
+            } else if (mot == D) {
+                if (has_down_stairs(loc)) {
+                    printf("hops downstairs.\n");
+                } else {
+                    printf("hops away downward.\n");
+                }
             } else {
-                printf("hops away upward.\n");
+                printf("hops away to the %s.\n", dir_to_text(mot));
             }
-        } else if (mot == D) {
-            if (has_down_stairs(loc)) {
-                printf("hops downstairs.\n");
+        } else if (rabbit->oldloc != loc && rabbit->loc == loc) {
+            // Describe a rabbit arriving in the player's current location.
+            printf("A fuzzy %s rabbit ", rabbit->color);
+            MotionWord mot2 = get_direction_from(loc, rabbit->oldloc);
+            assert(mot2 != NOTHING);
+            if (mot2 == U) {
+                if (has_up_stairs(loc)) {
+                    printf("hops in from upstairs.\n");
+                } else {
+                    printf("hops in from above.\n");
+                }
+            } else if (mot2 == D) {
+                if (is_overworld(loc) || has_down_stairs(loc)) {
+                    printf("hops up the stairs");
+                } else {
+                    printf("hops in from below.\n");
+                }
             } else {
-                printf("hops away downward.\n");
+                printf("hops in from the %s.\n", dir_to_text(mot2));
             }
-        } else {
-            printf("hops away to the %s.\n", dir_to_text(mot));
-        }
-    } else if (rabbit->oldloc != loc && rabbit->loc == loc) {
-        // Describe a rabbit arriving in the player's current location.
-        printf("A fuzzy %s rabbit ", rabbit->color);
-        MotionWord mot2 = get_direction_from(loc, rabbit->oldloc);
-        assert(mot2 != NOTHING);
-        if (mot2 == U) {
-            if (has_up_stairs(loc)) {
-                printf("hops in from upstairs.\n");
-            } else {
-                printf("hops in from above.\n");
-            }
-        } else if (mot2 == D) {
-            if (is_overworld(loc) || has_down_stairs(loc)) {
-                printf("hops up the stairs");
-            } else {
-                printf("hops in from below.\n");
-            }
-        } else {
-            printf("hops in from the %s.\n", dir_to_text(mot2));
         }
     }
 }
@@ -534,7 +565,9 @@ void move_npcs(Location loc)
     for (int i=0; i < number_of_rabbits; ++i) {
         struct Rabbit *rabbit = &rabbits[i];
         bool should_move = false;
-        if (rabbit->oldloc == rabbit->loc) {
+        if (rabbit->loc == INHAND) {
+            should_move = false;
+        } else if (rabbit->oldloc == rabbit->loc) {
             // A rabbit at rest tends to remain at rest.
             should_move = (ran(6) == 0);
         } else {
@@ -625,6 +658,8 @@ static bool noun_is_valid(Location loc, ObjectWord obj, ActionWord verb)
         return true;
     } else if (obj == RABBIT && rabbits_at(loc) != 0) {
         return true;
+    } else if (obj == MOSS && has_glowing_moss(loc)) {
+        return true;
     } else {
         return here(obj, loc);
     }
@@ -663,18 +698,24 @@ void simulate_an_adventure(Location xyz)
         loc = newloc;
         materialize_objects_if_necessary(loc);
         look_around(loc, verbose_mode);
-
         move_npcs(loc);
+        if (toting(MOSS)) {
+            objs(MOSS).prop -= 1;
+            if (objs(MOSS).prop == 0) {
+                dematerialize(MOSS);
+                puts("Your handful of moss fades and crumbles away into a gritty black powder.");
+            }
+        }
 
         while (true) {
             int k;
             verb = NOTHING;
             obj = NOTHING;
-        cycle:
             waved_rod_last_turn = waved_rod_this_turn;
             waved_rod_this_turn = false;
-            listen();  // get one or two words
             ++turns;
+        cycle:
+            listen();  // get one or two words
         parse:
             advise_about_going_west(word1);
             k = lookup(word1);
@@ -688,11 +729,15 @@ void simulate_an_adventure(Location xyz)
                     mot = k;
                     goto try_move;
                 case WordClass_Object:
-                    obj = k;
-                    if (!noun_is_valid(loc, obj, verb)) {
+                    if (!noun_is_valid(loc, k, verb)) {
                         printf("I see no %s here.\n", word1);
                         continue;
                     }
+
+                    if (obj == CAGE && verb == NOTHING && (k == BIRD || k == RABBIT)) {
+                        verb = TAKE;  // handle CAGE RABBIT
+                    }
+                    obj = k;
 
                     if (*word2 != '\0') break;
                     if (verb != NOTHING) {
@@ -741,7 +786,7 @@ void simulate_an_adventure(Location xyz)
                 case LOOK: {
                     static int look_count = 0;
                     if (look_count <= 3) {
-                        puts("Sorry, but I am not allowed to give more detail.  I will repeat the long description of your location.");
+                        puts("Sorry, but I am not allowed to give more detail. I will repeat the long description of your location.");
                         ++look_count;
                     }
                     look_around(loc, true);

@@ -20,6 +20,7 @@ struct Object objs_[(MAX_OBJ + 1) - MIN_OBJ];
 
 #define objs(o) objs_[(o) - MIN_OBJ]
 
+bool materialized(ObjectWord obj);
 bool toting(ObjectWord obj);
 bool here(ObjectWord obj, Location loc);
 bool there(ObjectWord obj, Location loc);
@@ -27,7 +28,9 @@ int holding_count(void);
 bool is_immobile(ObjectWord obj);
 bool is_treasure(ObjectWord obj);
 bool is_wearable(ObjectWord obj);
+bool gives_light(ObjectWord obj);
 void apport(ObjectWord t, Location loc);
+void dematerialize(ObjectWord t);
 
 void materialize_objects_if_necessary(Location loc);
 

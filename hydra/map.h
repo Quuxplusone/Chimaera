@@ -40,6 +40,7 @@ struct Exits get_exits(Location loc);
 bool has_light(Location loc);
 bool is_overworld(Location loc);
 bool is_forested(Location loc);
+bool has_glowing_moss(Location loc);
 bool has_up_stairs(Location loc);
 bool has_down_stairs(Location loc);
 

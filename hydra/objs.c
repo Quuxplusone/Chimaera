@@ -3,7 +3,7 @@
 #include "npcs.h"
 #include "objs.h"
 
-static bool materialized(ObjectWord obj)
+bool materialized(ObjectWord obj)
 {
     return objs(obj).prop != -1;
 }
@@ -67,6 +67,18 @@ bool is_wearable(ObjectWord obj)
     }
 }
 
+bool gives_light(ObjectWord obj)
+{
+    switch (obj) {
+        case LAMP:
+            return (objs(LAMP).prop == 1);
+        case MOSS:
+            return true;
+        default:
+            return false;
+    }
+}
+
 void apport(ObjectWord t, Location loc)
 {
     if (!materialized(t)) {
@@ -76,11 +88,18 @@ void apport(ObjectWord t, Location loc)
     objs(t).worn = false;
 }
 
+void dematerialize(ObjectWord t)
+{
+    objs(t).prop = -1;
+    objs(t).loc = NOWHERE;
+}
+
 void materialize_objects_if_necessary(Location loc)
 {
     for (ObjectWord t = MIN_OBJ; t <= MAX_OBJ; ++t) {
         if (z_of(loc) < objs(t).min_level) continue;
         if (t == BIRD && !is_forested(loc)) continue;
+        if (t == LAMP && !has_light(loc)) continue;  // that wouldn't be fair
         if (object_can_be_found_at(t, loc)) {
             // Only one object should be found in any given room.
             // Objects should not suddenly appear in a room that's already been visited!
@@ -117,6 +136,7 @@ void initialize_objects(void)
     new_obj(1, 5, ROD, "Black rod");
     new_obj(2, 5, CLUB, "Club with white stripe");
     new_obj(6, 10, ANVIL, "(Anvil)");
+    new_obj(0, 0, MOSS, "Handful of glowing moss");
 
     new_obj(2, 5, GOLD, "Large gold nugget");
     new_obj(2, 5, DIAMONDS, "Several diamonds");

@@ -74,7 +74,7 @@ void build_vocabulary(void)
     new_word("touch", LOOK); new_word("descri", LOOK);
     new_word("get", TAKE); new_word("take", TAKE);
     new_word("catch", TAKE); new_word("captur", TAKE);
-    new_word("drop", DROP); new_word("releas", DROP); new_word("free", DROP);
+    new_word("drop", DROP); new_word("releas", DROP); new_word("free", DROP); new_word("uncage", DROP);
     new_word("wear", WEAR);
     new_word("light", ON); new_word("on", ON);
     new_word("exting", OFF); new_word("off", OFF); new_word("douse", OFF);
@@ -104,6 +104,7 @@ void build_vocabulary(void)
     new_word("rod", ROD); new_word("wand", ROD);
     new_word("club", CLUB); new_word("juggli", CLUB);
     new_word("anvil", ANVIL);
+    new_word("moss", MOSS);
 
     new_word("gold", GOLD); new_word("nugget", GOLD);
     new_word("diamon", DIAMONDS);
@@ -152,6 +153,11 @@ bool is_semicardinal(MotionWord mot)
     return N <= mot && mot <= SE;
 }
 
+MotionWord get_random_semicardinal(int seed)
+{
+    return N + (seed % 8);
+}
+
 const char *dir_to_text(MotionWord mot)
 {
     switch (mot) {
@@ -159,10 +165,10 @@ const char *dir_to_text(MotionWord mot)
         case S: return "south";
         case E: return "east";
         case W: return "west";
-        case NE: return "northeast";
         case NW: return "northwest";
-        case SE: return "southeast";
+        case NE: return "northeast";
         case SW: return "southwest";
+        case SE: return "southeast";
         case U: return "up";
         case D: return "down";
     }

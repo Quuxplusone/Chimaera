@@ -20,7 +20,7 @@ typedef enum {
 typedef enum {
     MIN_OBJ=100,
     DOG=MIN_OBJ,
-    LAMP, CAGE, RABBIT, BIRD, ROD, CLUB, ANVIL,
+    LAMP, CAGE, RABBIT, BIRD, ROD, CLUB, ANVIL, MOSS,
     GOLD, DIAMONDS, SILVER, JEWELS, COINS, CHEST, EGGS,
     TRIDENT, VASE, EMERALD, PYRAMID, PEARL, RUG, SPICES, CHAIN,
     SWORD, ERING,
@@ -50,6 +50,7 @@ int lookup(const char *w);
 void build_vocabulary(void);
 WordClass word_class(int word);
 bool is_semicardinal(MotionWord mot);
+MotionWord get_random_semicardinal(int seed);
 const char *dir_to_text(MotionWord mot);
 
 #endif // H_VOCAB

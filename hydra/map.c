@@ -179,6 +179,8 @@ bool has_light(Location loc)
         return false;
     } else if (is_overworld(loc)) {
         return true;
+    } else if (has_glowing_moss(loc)) {
+        return true;
     } else {
         struct Exits exits = get_exits(loc);
         return has_light(exits.go[U]);
@@ -208,6 +210,23 @@ bool is_forested(Location loc)
     return (wood >= 2);
 }
 
+bool has_glowing_moss(Location loc)
+{
+    if (is_overworld(loc)) {
+        return false;
+    }
+
+    const int x = x_of(loc);
+    const int y = y_of(loc);
+    const int z = z_of(loc);
+
+    int moss = 0;
+    for (int i = 2; i <= 8; i *= 2) {
+        const Location temp = xyz(x/i, y/i, z/i);
+        moss += lrng_one_in(2, temp, "forest");
+    }
+    return (moss >= 2);
+}
 
 bool has_up_stairs(Location loc)
 {
