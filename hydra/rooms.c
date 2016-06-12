@@ -16,6 +16,7 @@ struct Description {
     bool is_corner;
     bool is_edge;
     bool is_dead_end;  // "Dead end."
+    bool is_maze;      // "You are in a maze of twisty little passages, all alike."
     const char *adj1;
     const char *adj2;  // may be NULL
     const char *noun;
@@ -155,7 +156,11 @@ static struct Description get_raw_cave_description(Location loc, bool verbose)
         result.is_dead_end = true;
         result.adj1 = "dead";
         result.noun = "end";
-        result.exits.go[get_nth_exit(&exits, 0)] = NOWHERE;
+        return result;
+    } else if (is_twisty_maze(loc)) {
+        result.is_maze = true;
+        result.adj1 = lrng_one_in(2, loc, "maze") ? "twisty" : "little";
+        result.noun = "passage";
         return result;
     }
 
@@ -463,6 +468,8 @@ void print_short_description(Location loc)
 
     if (desc.is_dead_end) {
         puts("Dead end.");
+    } else if (desc.is_maze) {
+        puts("You are in a maze of twisty little passages, all alike.");
     } else {
         if (desc.is_corner) {
             printf("You're at corner of ");
@@ -492,6 +499,9 @@ void print_long_description(Location loc)
 
     if (desc.is_dead_end) {
         puts("Dead end.");
+        return;
+    } else if (desc.is_maze) {
+        puts("You are in a maze of twisty little passages, all alike.");
         return;
     }
 

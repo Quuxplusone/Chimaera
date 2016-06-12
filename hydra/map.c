@@ -152,14 +152,17 @@ static struct Exits get_wiggled_cave_exits(Location loc)
         } \
     } while (0)
 
-    WIGGLE(N, NW, NE);
-    WIGGLE(W, NW, SW);
-    WIGGLE(S, SE, SW);
-    WIGGLE(E, NE, SE);
-    WIGGLE(NW, N, W);
-    WIGGLE(SW, S, W);
-    WIGGLE(NE, N, E);
-    WIGGLE(SE, S, E);
+    const int wiggles = is_twisty_maze(loc) ? 3 : 1;
+    for (int i=0; i < wiggles; ++i) {
+        WIGGLE(N, NW, NE);
+        WIGGLE(W, NW, SW);
+        WIGGLE(S, SE, SW);
+        WIGGLE(E, NE, SE);
+        WIGGLE(NW, N, W);
+        WIGGLE(SW, S, W);
+        WIGGLE(NE, N, E);
+        WIGGLE(SE, S, E);
+    }
 
     return result;
 }
@@ -212,7 +215,7 @@ bool is_forested(Location loc)
 
 bool has_glowing_moss(Location loc)
 {
-    if (is_overworld(loc)) {
+    if (is_overworld(loc) || is_twisty_maze(loc)) {
         return false;
     }
 
@@ -228,9 +231,25 @@ bool has_glowing_moss(Location loc)
     return (moss >= 2);
 }
 
+bool is_twisty_maze(Location loc)
+{
+    const int x = x_of(loc);
+    const int y = y_of(loc);
+    const int z = z_of(loc);
+    // Hardcode a single 4x4x2 region for now.
+    if (3 <= z && z <= 4) {
+        if (4 <= x && x <= 7) {
+            if (5 <= y && y <= 8) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 bool has_up_stairs(Location loc)
 {
-    if (is_overworld(loc)) {
+    if (is_overworld(loc) || is_twisty_maze(loc)) {
         return false;
     }
     const struct Exits exits = get_exits(loc);
