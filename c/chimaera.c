@@ -2022,6 +2022,7 @@ void tnoint(long n)                 /* Append a long integer to line    */
     char text[11];
 #ifdef Z_MACHINE
     char *p = text;
+    if (n < 0)       { *p++ = 0xE2; *p++ = 0x88; *p++ = 0x92; n = -n; }
     if (n >= 100000) { *p++ = '0' + (n % 1000000 / 100000); }
     if (n >= 10000)  { *p++ = '0' + (n % 100000  / 10000);  }
     if (n >= 1000)   { *p++ = '0' + (n % 10000   / 1000);   }
