@@ -121,41 +121,41 @@ Array __long_temp3 -> 4;
 	z-->1 = q1-->1 | q2-->1;
 ];
 
-![ __long_asr q1 q2 z  s t;
-!	if ((q2-->0 ~= 0) || (((q2-->1)-32768) > (31-32768)))
-!	{
-!		! All bits shifted off; so we just propagate the sign.
-!
-!		if (q2-->0 & $8000)
-!		{
-!			z-->0 = -1;
-!			z-->1 = -1;
-!		}
-!		else
-!		{
-!			z-->0 = 0;
-!			z-->1 = 0;
-!		}
-!
-!		return;
-!	}
-!	
-!	q2 = -(q2-->1 & $1F);
-!	s = 16 + q2;
-!
-!	t = q1-->1;
-!	@log_shift t q2 -> t;
-!	z-->1 = t;
-!
-!	t = q1-->0;
-!	@log_shift t s -> t;
-!	z-->1 = z-->1 | t;
-!
-!	t = q1-->0;
-!	@art_shift t q2 -> t;
-!	z-->0 = t;
-!];
+[ __long_asr q1 q2 z  s t;
+	if ((q2-->0 ~= 0) || (q2-->1 > 31))
+	{
+		! All bits shifted off; so we just propagate the sign.
+
+		if (q1-->0 & $8000)
+		{
+			z-->0 = -1;
+			z-->1 = -1;
+		}
+		else
+		{
+			z-->0 = 0;
+			z-->1 = 0;
+		}
+
+		return;
+	}
 	
+	q2 = -(q2-->1 & $1F);
+	s = 16 + q2;
+
+	t = q1-->1;
+	@log_shift t q2 -> t;
+	z-->1 = t;
+
+	t = q1-->0;
+	@log_shift t s -> t;
+	z-->1 = z-->1 | t;
+
+	t = q1-->0;
+	@art_shift t q2 -> t;
+	z-->0 = t;
+];
+
 ![ __long_lsr q1 q2 z  s t;
 !	if ((q2-->0 ~= 0) || ((q2-->1-32768) > (31-32768)))
 !	{

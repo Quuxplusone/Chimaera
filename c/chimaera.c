@@ -50,9 +50,9 @@
 int ran(int range) =
     "\t@random r0 -> r0;\n"
     "\t@sub r0 0+1 -> r0;\n";
-static int seed_ = 0;
+static long seed_ = 0;
 void srand(int seed) { seed_ = seed; }
-int rand() { seed_ = seed_ * 214013L + 2531011L; return (seed_ >> 16) & 0x7fff; }
+int rand() { seed_ = seed_ * 214013uL + 2531011uL; return (seed_ >> 16) & 0x7fff; }
 #endif /* Z_MACHINE */
 
 /*---- Main Function ---------------------------------------------------*/
