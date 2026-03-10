@@ -60,6 +60,8 @@ Global putc_codepoint;
     ch = ch & $FF;
     if (ch == 10) {
         print (char) 13;
+    } else if (ch == 9) {
+        print (char) 32;
     } else if ($80 <= ch && ch <= $BF) {
         @log_shift putc_codepoint 6 -> putc_codepoint;
         putc_codepoint = putc_codepoint | (ch & $3F);
